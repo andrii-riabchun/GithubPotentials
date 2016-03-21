@@ -1,11 +1,12 @@
 package controllers
 
 import (
-    "github.com/octokit/go-octokit/octokit"
     "github.com/go-martini/martini"
-    "net/http")
+    "github.com/google/go-github/github" 
+    "net/http"
+)
     
-//GetGraph kek
-func GetGraph(github *octokit.Client, p *martini.Params) (int, string) {
+//GetGraph - GET /repoGraph/:criteria/:repopath/:timespan
+func GetGraph(client *github.Client, p *martini.Params) (int, string) {
     return http.StatusOK, "kek"
 }

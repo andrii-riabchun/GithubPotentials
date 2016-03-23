@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+    "strconv"
     "golang.org/x/oauth2"
 	"github.com/go-martini/martini"
 	"github.com/google/go-github/github"   
@@ -15,26 +16,34 @@ const configFile = "config.json"
 
 func init(){
     app = martini.Classic()
-    //routing
-    app.Get("/repoGraph/:criteria/:repopath/:timespan", controllers.GetGraph)
+    
+    
     
    
     
-    conf,err:=helpers.LoadConfigFromFile(configFile)
+    config,err :=helpers.LoadConfigFromFile(configFile)
     if err!=nil{
         fmt.Println("config error: ",err)
     }
+    conf=config
     
     //map gh client to all controllers (DI)
-    client:=createAPIClient(conf.GithubPersonalToken)
-    app.Map(&client)
-        
+    client := createAPIClient(config.GithubPersonalToken)
+    
+    app.Map(client)
+    //routing
+    app.Group("/repoinfo", func(r martini.Router){
+        r.Get("/stars/:owner/:repo/:timespan", controllers.GetStarsInfo)
+        r.Get("/commits/:owner/:repo/:timespan", controllers.GetCommitsInfo)
+        r.Get("/contributors/:owner/:repo/:timespan", controllers.GetContributorsInfo)
+    })
 }
 
 func main() {
-	app.RunOnAddr(":"+string(conf.Port))
+	app.RunOnAddr(":"+strconv.Itoa(conf.Port))
 }
 
+//token - personal API token
 func createAPIClient(token string) *github.Client{
   ts := oauth2.StaticTokenSource(
     &oauth2.Token{AccessToken: token},

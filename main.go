@@ -17,10 +17,6 @@ const configFile = "config.json"
 func init(){
     app = martini.Classic()
     
-    
-    
-   
-    
     config,err :=helpers.LoadConfigFromFile(configFile)
     if err!=nil{
         fmt.Println("config error: ",err)
@@ -32,11 +28,7 @@ func init(){
     
     app.Map(client)
     //routing
-    app.Group("/repoinfo", func(r martini.Router){
-        r.Get("/stars/:owner/:repo/:timespan", controllers.GetStarsInfo)
-        r.Get("/commits/:owner/:repo/:timespan", controllers.GetCommitsInfo)
-        r.Get("/contributors/:owner/:repo/:timespan", controllers.GetContributorsInfo)
-    })
+    app.Get("/:owner/:repo/:timespan", controllers.GetRepoInfo)
 }
 
 func main() {

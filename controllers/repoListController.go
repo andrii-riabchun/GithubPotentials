@@ -3,14 +3,13 @@ package controllers
 import (
     "net/http"
     "time"
-    //"sync"
     "strconv"
     "encoding/json"
     "sort"
     "github.com/go-martini/martini"
     "github.com/google/go-github/github" 
-    "github.com/andrewRyabchun/GithubTrendingPerspective/models"
-    "github.com/andrewRyabchun/GithubTrendingPerspective/helpers"
+    "github.com/andrewRyabchun/GithubPotentials/models"
+    "github.com/andrewRyabchun/GithubPotentials/helpers"
 )
 const pagesCount = 1
 // GetRepoList GET /repos/:criteria/:timespan

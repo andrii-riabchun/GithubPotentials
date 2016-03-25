@@ -8,8 +8,8 @@ import (
     "encoding/json"
     "github.com/go-martini/martini"
     "github.com/google/go-github/github" 
-    "github.com/andrewRyabchun/GithubTrendingPerspective/models"
-    "github.com/andrewRyabchun/GithubTrendingPerspective/helpers"
+    "github.com/andrewRyabchun/GithubPotentials/models"
+    "github.com/andrewRyabchun/GithubPotentials/helpers"
 )
    
 // GetRepoInfo GET /:owner/:repo/:timespan
@@ -26,7 +26,6 @@ func GetRepoInfo(client *github.Client, params martini.Params) (int, []byte){
     joiner.Add(3) 
     
     var isError bool
-    
     var starsCount int
     var starsData []int    
     go func() {
@@ -127,7 +126,12 @@ func commits(client *github.Client,owner,repo string, date time.Time, days int) 
     daysCommitsDict := make(map[int]int,days)
     totalCommits := 0
     for {
+        
         commits, resp, err := client.Repositories.ListCommits(owner, repo, opt)
+        if (len(commits)) == 0{
+            continue
+        }
+            
         if err!=nil{
             return 0,nil,err
         }

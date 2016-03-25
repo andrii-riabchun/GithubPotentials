@@ -3,11 +3,12 @@ package main
 import (
     "fmt"
     "strconv"
+    "log"
     "golang.org/x/oauth2"
 	"github.com/go-martini/martini"
 	"github.com/google/go-github/github"   
-    "github.com/andrewRyabchun/GithubTrendingPerspective/helpers"
-	"github.com/andrewRyabchun/GithubTrendingPerspective/controllers"
+    "github.com/andrewRyabchun/GithubPotentials/helpers"
+	"github.com/andrewRyabchun/GithubPotentials/controllers"
 )
 
 var app *martini.ClassicMartini
@@ -29,7 +30,20 @@ func init(){
     app.Map(client)
     //routing
     app.Get("/repos/:criteria/:timespan", controllers.GetRepoList)
+    app.Get("/orgs/:criteria/:timespan", controllers.GetOrgList)
     app.Get("/:owner/:repo/:timespan", controllers.GetRepoInfo)
+    
+    app.Use(func(c martini.Context, log *log.Logger, client *github.Client){
+        c.Next()
+        rate, _, err := client.RateLimits()
+        if err != nil {
+            return
+        }
+        
+        log.Printf("Core rate: %d. \tReset: %s",rate.Core.Remaining, rate.Core.Reset)
+        log.Printf("Search rate: %d. \tReset: %s",rate.Search.Remaining, rate.Search.Reset)
+})
+    
     
 }
 

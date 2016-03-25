@@ -132,10 +132,10 @@ func commits(client *github.Client,owner,repo string, date time.Time, days int) 
             return 0,nil,err
         }
         
-        for _, commit := range commits{              
-                dayBeforeNow := helpers.DaysSinceNow(*commit.Commit.Committer.Date)
-                daysCommitsDict[dayBeforeNow]++     
-                totalCommits++                
+        for _, commit := range commits{
+            dayBeforeNow := helpers.DaysSinceNow(*commit.Commit.Committer.Date)
+            daysCommitsDict[dayBeforeNow]++     
+            totalCommits++                
         }
         
         if resp.NextPage == 0 {

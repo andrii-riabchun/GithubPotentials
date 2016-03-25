@@ -28,7 +28,9 @@ func init(){
     
     app.Map(client)
     //routing
+    app.Get("/repos/:criteria/:timespan", controllers.GetRepoList)
     app.Get("/:owner/:repo/:timespan", controllers.GetRepoInfo)
+    
 }
 
 func main() {

@@ -1,0 +1,29 @@
+body {
+    background: #6F5499;
+    height: 90%;
+}
+
+h1, footer div{
+    text-align: center;
+}
+
+article, header, footer{
+    background: #FEFEFE;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    box-shadow: black 2px 2px 2px;
+}
+
+#main-tabs li{
+    width: 33.33%;
+    text-align: center;
+    white-space: nowrap;    
+}
+
+::selection{
+    background: #6F5499;
+}
+
+::-moz-selection{
+    background: #6F5499;
+}

@@ -1,7 +1,108 @@
-<html>
-<head>
-</head>
-<body>
-    test
-</body>
+<!doctype html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Github Potentials</title>
+    <link rel="stylesheet" href="css/foundation.css" />
+    <link rel="stylesheet" href="css/style.css"/>
+    <script src="js/chart.js"></script>
+        <script src="js/jquery.js"></script>
+    <script src="js/foundation.js"></script>
+  </head>
+  <body>
+    <div class="small-12 medium-8 medium-centered columns">
+        <header>
+            <div class="panel">
+            <h1>Github Potentials</h1>
+            </div>
+        </header>
+        <article>
+            <ul class="tabs" data-tabs id="main-tabs">
+                <li class="tabs-title is-active"><a href="#repos-panel" aria-selected="true">Repositories</a></li>
+                <li class="tabs-title"><a href="#orgs-panel">Organizations</a></li>
+                <li class="tabs-title"><a href="#repoinfo-panel">Repository Stats</a></li>
+            </ul>
+            <div class="tabs-content" data-tabs-content="main-tabs">
+                <div class="tabs-panel is-active" id="repos-panel">
+                        <div class="row">
+                            <label class="large-4 columns">Stats for the last <i>n</i> days:
+                                <input type="text" placeholder="period">
+                            </label>
+                            <label class="large-4 columns">Select criteria:
+                                <select>
+                                    <option value="commits">Commits</option>
+                                    <option value="contris">Unique contributors</option>
+                                    <option value="stars">New stargazers</option>
+                                </select>
+                            </label>
+                            <label>&nbsp;
+                            <div class="large-4 columns">
+                                <button class="button small-12">Go</button>
+                            </div>
+                            </label>                        
+                        </div>
+                    <table class="hover stack" id="repos-table">
+                        <caption>Repositories</caption>
+                        <thead>
+                            <tr>
+                            <th width="100">Rank</th>
+                            <th>Repository</th>
+                            <th width="150" id="repo-criteria-header">Criteria value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tabs-panel" id="orgs-panel">
+                        <div class="row">
+                            <label class="large-4 columns">Stats for the last <i>n</i> days:
+                                <input type="text" placeholder="period">
+                            </label>
+                            <label class="large-4 columns">Select criteria:
+                                <select>
+                                    <option value="total">Total Commits</option>
+                                    <option value="avg">Commits per members</option>
+                                </select>
+                            </label>
+                            <label>&nbsp;
+                            <div class="large-4 columns">
+                                <button class="button small-12">Go</button>
+                            </div>
+                            </label>                        
+                        </div>
+                </div>
+                <div class="tabs-panel " id="repoinfo-panel">
+                    <form>
+                        <div class="row">
+                            <label class="medium-6 columns">Repository:
+                                <input type="text" placeholder="owner/repo">
+                            </label>
+                            <label class="medium-4 columns">Stats for the last <i>n</i> days:
+                                <input type="text" placeholder="period">
+                            </label>
+                            <label>&nbsp;
+                            <div class="medium-2 columns">
+                                <button class="button medium-12">Go</button>
+                            </div>
+                            </label>                        
+                        </div>
+                    </form>
+                    <canvas id="canvas" height="400" width="600"/>
+                </div>
+            </div>
+        </article>
+        <footer class="row">
+            <div class="medium-4 column">Special for UAWebChallenge IX</div>
+            <div class="medium-4 column">Powered by Go and Github API</div>
+        </footer>
+    </div>
+
+    <script>
+      $(document).foundation();
+    </script>
+  </body>
 </html>

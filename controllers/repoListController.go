@@ -11,14 +11,15 @@ import (
     "github.com/andrewRyabchun/GithubPotentials/models"
     "github.com/andrewRyabchun/GithubPotentials/helpers"
 )
-const pagesCount = 1
-// GetRepoList GET /repos/:criteria/:timespan
+const repoPagesCount = 1
+// GetRepoList GET /repos/:criteria/:weeks
 func GetRepoList(client *github.Client, params martini.Params) (int, []byte){
-    days, err := strconv.Atoi(params["timespan"])
-    if err != nil || days<1 {
+    weeks, err := strconv.Atoi(params["weeks"])
+    if err != nil || weeks<1 || weeks>52 {
         return http.StatusBadRequest, nil
     }
-    date := time.Now().AddDate(0,0,-days)
+    date := time.Now().AddDate(0,0,-weeks*7)
+    days:=weeks*7
        
     query:="stars:>10 size:>1 pushed:>"+helpers.FormatDate(date)
  
@@ -74,7 +75,7 @@ func listByStars(client *github.Client, query string, date time.Time, days int) 
         }
         
         for _,v:= range result.Repositories{
-            count,_,err := stars(client, *v.Owner.Login, *v.Name, date, days)
+            count,_,err := stars(client, *v.Owner.Login, *v.Name, date, days, true)
             if err != nil {
                 return nil, err
             }
@@ -85,7 +86,7 @@ func listByStars(client *github.Client, query string, date time.Time, days int) 
             repos = append(repos, repo)
         }
        
-        if resp.NextPage == 0 || i==pagesCount {
+        if resp.NextPage == 0 || i==repoPagesCount {
             break
         }
         opt.Page = resp.NextPage
@@ -124,7 +125,7 @@ func listByCommits(client *github.Client, query string, date time.Time, days int
             repos = append(repos, repo)
         }
        
-        if resp.NextPage == 0 || i==pagesCount {
+        if resp.NextPage == 0 || i==repoPagesCount {
             break
         }
         opt.Page = resp.NextPage
@@ -163,7 +164,7 @@ func listByContribs(client *github.Client, query string, date time.Time, days in
             repos = append(repos, repo)
         }
        
-        if resp.NextPage == 0 || i==pagesCount {
+        if resp.NextPage == 0 || i==repoPagesCount {
             break
         }
         opt.Page = resp.NextPage

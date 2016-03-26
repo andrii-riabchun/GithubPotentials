@@ -12,11 +12,11 @@ import (
     "github.com/andrewRyabchun/GithubPotentials/helpers"
 )
    
-// GetRepoInfo GET /:owner/:repo/:timespan
+// GetRepoInfo GET /:owner/:repo/:days
 func GetRepoInfo(client *github.Client, params martini.Params) (int, []byte){
     owner:=params["owner"]
     repo :=params["repo"]   
-    days, err := strconv.Atoi(params["timespan"])
+    days, err := strconv.Atoi(params["days"])
     if err != nil || days<1 {
         return http.StatusBadRequest, nil
     }
@@ -31,7 +31,7 @@ func GetRepoInfo(client *github.Client, params martini.Params) (int, []byte){
     go func() {
         defer joiner.Done()
         var starsErr error
-        starsCount,starsData,starsErr=stars(client, owner, repo, date, days)
+        starsCount,starsData,starsErr=stars(client, owner, repo, date, days, false)
         if starsErr!=nil{
             isError=true
         }
@@ -155,7 +155,7 @@ func commits(client *github.Client,owner,repo string, date time.Time, days int) 
     return totalCommits, resArr, nil
 }
 
-func stars(client *github.Client,owner,repo string, date time.Time, days int) (int, []int, error){
+func stars(client *github.Client,owner,repo string, date time.Time, days int, omitPopular bool) (int, []int, error){
     opt := &github.ListOptions{PerPage:100}
     
     daysStarsDict := make(map[int]int,days)
@@ -166,7 +166,9 @@ func stars(client *github.Client,owner,repo string, date time.Time, days int) (i
         if err!=nil{
             return 0,nil,err
         }
-        
+        if omitPopular && len(stargazers)>100{
+            continue
+        }
         for _, sg := range stargazers{
             if sg.StarredAt.Time.After(date){                 
                 dayBeforeNow := helpers.DaysSinceNow(sg.StarredAt.Time)

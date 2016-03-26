@@ -29,9 +29,9 @@ func init(){
     
     app.Map(client)
     //routing
-    app.Get("/repos/:criteria/:timespan", controllers.GetRepoList)
-    app.Get("/orgs/:criteria/:timespan", controllers.GetOrgList)
-    app.Get("/:owner/:repo/:timespan", controllers.GetRepoInfo)
+    app.Get("/repos/:criteria/:weeks", controllers.GetRepoList)
+    app.Get("/orgs/:criteria/:weeks", controllers.GetOrgList)
+    app.Get("/:owner/:repo/:days", controllers.GetRepoInfo)
     
     app.Use(func(c martini.Context, log *log.Logger, client *github.Client){
         c.Next()

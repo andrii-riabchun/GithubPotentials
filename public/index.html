@@ -27,8 +27,8 @@
             <div class="tabs-content" data-tabs-content="main-tabs">
                 <div class="tabs-panel is-active" id="repos-panel">
                         <div class="row">
-                            <label class="large-4 columns">Stats for the last <i>n</i> days:
-                                <input type="text" placeholder="period">
+                            <label class="large-4 columns">Number of weeks:
+                                <input type="number" value="1" min="1" max="52" placeholder="period">
                             </label>
                             <label class="large-4 columns">Select criteria:
                                 <select>
@@ -41,9 +41,13 @@
                             <div class="large-4 columns">
                                 <button class="button small-12">Go</button>
                             </div>
-                            </label>                        
+                            </label>      
+                                              
                         </div>
-                    <table class="hover stack" id="repos-table">
+                    <div class="medium-4 medium-centered" id="repos-spinner" hidden>
+                        <img src="img/spinner.svg"/> 
+                    </div>
+                    <table class="hover stack" id="repos-table" hidden>
                         <caption>Repositories</caption>
                         <thead>
                             <tr>
@@ -59,8 +63,8 @@
                 </div>
                 <div class="tabs-panel" id="orgs-panel">
                         <div class="row">
-                            <label class="large-4 columns">Stats for the last <i>n</i> days:
-                                <input type="text" placeholder="period">
+                            <label class="large-4 columns">Number of weeks:
+                                <input type="number" value="1" min="1" max="52" placeholder="period">
                             </label>
                             <label class="large-4 columns">Select criteria:
                                 <select>
@@ -76,22 +80,20 @@
                         </div>
                 </div>
                 <div class="tabs-panel " id="repoinfo-panel">
-                    <form>
                         <div class="row">
-                            <label class="medium-6 columns">Repository:
+                            <label class="large-6 columns">Repository:
                                 <input type="text" placeholder="owner/repo">
                             </label>
-                            <label class="medium-4 columns">Stats for the last <i>n</i> days:
+                            <label class="large-4 columns">Stats for the last <i>n</i> days:
                                 <input type="text" placeholder="period">
                             </label>
                             <label>&nbsp;
-                            <div class="medium-2 columns">
-                                <button class="button medium-12">Go</button>
+                            <div class="large-2 columns">
+                                <button class="button small-12">Go</button>
                             </div>
                             </label>                        
                         </div>
-                    </form>
-                    <canvas id="canvas" height="400" width="600"/>
+                    <canvas id="canvas" height="400"/>
                 </div>
             </div>
         </article>

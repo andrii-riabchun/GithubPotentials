@@ -62,6 +62,7 @@ func listOrgByTotalCommits(client *github.Client, query string, weeks int) ([]mo
     }  
     for {           
         i++
+        println("search users (orgs ttl)")
         orgs, resp, err := client.Search.Users(query, opt)
         if err!=nil{
             return nil, err
@@ -105,17 +106,18 @@ func listOrgByAvgCommits(client *github.Client, query string, weeks int) ([]mode
     }
     for {           
         i++
+        println("search users (orgs avg)")
         orgs, resp, err := client.Search.Users(query, opt)
         if err!=nil{
             return nil, err
         }
-        println(len(orgs.Users)) 
         for _,orgUser:= range orgs.Users{
                       
             repoCommits, err:=getTotalCommitsByOrg(client,*orgUser.Login,weeks)
             if repoCommits==0 {
                 continue
-            }    
+            }
+            println("org get (for user, in avg)")    
             org, _, err := client.Organizations.Get(*orgUser.Login)
             if err != nil || org.Collaborators==nil || *org.Collaborators==0{
                 continue
@@ -137,7 +139,6 @@ func listOrgByAvgCommits(client *github.Client, query string, weeks int) ([]mode
                 SortingCriteria: avgCommits,
             }
             
-            println(result.SortingCriteria)
             
             orgResult = append(orgResult, result)
         }
@@ -162,12 +163,14 @@ func getTotalCommitsByOrg(client *github.Client, org string, weeks int) (int, er
         if *repo.StargazersCount == 0 || *repo.Size==0 || *repo.Fork{
             continue
         }
+        println("repos listCommits (orgs)")
         parts, resp, err := client.Repositories.ListParticipation(org, *repo.Name)
         if err != nil {
             return -1, err
         }
         for resp.StatusCode==202{
             time.Sleep(1000*1000*1000*1) //1 seconds
+            println("repos listCommits retry (orgs)")
             parts, resp, err = client.Repositories.ListParticipation(org, *repo.Name)
                 if err != nil {
                     return -1, err
@@ -195,6 +198,7 @@ func reposByOrg(client *github.Client, org string) ([]github.Repository, error){
     var repos []github.Repository
     
     for {
+        println("get repos by org")
         result, resp, err := client.Repositories.ListByOrg(org, opt)
         if err!=nil{
             return nil, err
@@ -216,6 +220,7 @@ func orgMembersCount(client *github.Client, org string)(int, error){
     }
     var totalMembers int
     for {
+        println("get org members")
         members, resp, err := client.Organizations.ListMembers(org, opt)
         if err!=nil{
             return 0, err

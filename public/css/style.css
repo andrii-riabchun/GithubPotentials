@@ -7,10 +7,15 @@ h1, footer div{
     text-align: center;
 }
 
+article{
+    min-height:  500px;
+}
+
 article, header, footer{
     background: #FEFEFE;
     margin-top: 10px;
     margin-bottom: 10px;
+    min-width:   380px;
     box-shadow: black 2px 2px 2px;
 }
 

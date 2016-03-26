@@ -88,6 +88,7 @@ func contributors(client *github.Client,owner,repo string, date time.Time, days 
     daysContribsDict := make(map[int][]int,days) //[day: [ids..]...]
     uniqueContribs := make(map[int]interface{}, days)
     for {
+        println("get commits (repo info - contibutors)")
         commits, resp, err := client.Repositories.ListCommits(owner, repo, opt)
         if err!=nil{
             return 0,nil,err
@@ -101,8 +102,6 @@ func contributors(client *github.Client,owner,repo string, date time.Time, days 
             }else if commit.Committer !=nil{
                 daysContribsDict[daySinceNow]=append(daysContribsDict[daySinceNow],*commit.Committer.ID)
                 uniqueContribs[*commit.Committer.ID]=nil //add to unique collection                         
-            }else{
-                continue
             }               
         }
         
@@ -126,22 +125,21 @@ func commits(client *github.Client,owner,repo string, date time.Time, days int) 
     daysCommitsDict := make(map[int]int,days)
     totalCommits := 0
     for {
-        
-        commits, resp, err := client.Repositories.ListCommits(owner, repo, opt)
-        if (len(commits)) == 0{
-            continue
-        }
-            
+        println("get commits (repo info - commits)")
+        commits, resp, err := client.Repositories.ListCommits(owner, repo, opt)          
         if err!=nil{
             return 0,nil,err
         }
-        
-        for _, commit := range commits{
-            dayBeforeNow := helpers.DaysSinceNow(*commit.Commit.Committer.Date)
-            daysCommitsDict[dayBeforeNow]++     
-            totalCommits++                
+
+        if (len(commits)) != 0{
+            for _, commit := range commits{
+                dayBeforeNow := helpers.DaysSinceNow(*commit.Commit.Committer.Date)
+                daysCommitsDict[dayBeforeNow]++     
+                totalCommits++                
+            }
         }
         
+       
         if resp.NextPage == 0 {
             break
         }
@@ -162,18 +160,18 @@ func stars(client *github.Client,owner,repo string, date time.Time, days int, om
     totalStars := 0
     for {
         //no timestamps =(, going to contribute go-github
+        println("list stargazers for repo")       
         stargazers, resp, err := helpers.ListStargazers(client,owner,repo,opt)
         if err!=nil{
             return 0,nil,err
         }
-        if omitPopular && len(stargazers)>100{
-            continue
-        }
-        for _, sg := range stargazers{
-            if sg.StarredAt.Time.After(date){                 
-                dayBeforeNow := helpers.DaysSinceNow(sg.StarredAt.Time)
-                daysStarsDict[dayBeforeNow]++     
-                totalStars++                
+        if !omitPopular || len(stargazers)<100{
+            for _, sg := range stargazers{
+                if sg.StarredAt.Time.After(date){                 
+                    dayBeforeNow := helpers.DaysSinceNow(sg.StarredAt.Time)
+                    daysStarsDict[dayBeforeNow]++     
+                    totalStars++                
+                }
             }
         }
         
@@ -181,6 +179,8 @@ func stars(client *github.Client,owner,repo string, date time.Time, days int, om
             break
         }
 	    opt.Page = resp.NextPage
+
+
     }
     resArr := make([]int, days)
     

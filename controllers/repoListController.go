@@ -69,6 +69,7 @@ func listByStars(client *github.Client, query string, date time.Time, days int) 
     
     for {           
         i++
+        println("search repos (list by stars)")
         result, resp, err := client.Search.Repositories(query, opt)
         if err!=nil{
             return nil, err
@@ -78,6 +79,9 @@ func listByStars(client *github.Client, query string, date time.Time, days int) 
             count,_,err := stars(client, *v.Owner.Login, *v.Name, date, days, true)
             if err != nil {
                 return nil, err
+            }
+            if count==0{
+                continue
             }
             repo := models.RepoEntry{
                 FullName: *v.FullName,
@@ -108,15 +112,18 @@ func listByCommits(client *github.Client, query string, date time.Time, days int
     
     for {           
         i++
+        println("search repos (list by commits)")
         result, resp, err := client.Search.Repositories(query, opt)
         if err!=nil{
             return nil, err
         }
-        println(i)
         for _,v:= range result.Repositories{
             count,_,err := commits(client, *v.Owner.Login, *v.Name, date, days)
             if err != nil {
                 return nil, err
+            }
+            if count==0{
+                continue
             }
             repo := models.RepoEntry{
                 FullName: *v.FullName,
@@ -147,6 +154,7 @@ func listByContribs(client *github.Client, query string, date time.Time, days in
     
     for {           
         i++
+        println("search repos (list by contribs)")
         result, resp, err := client.Search.Repositories(query, opt)
         if err!=nil{
             return nil, err
@@ -156,6 +164,9 @@ func listByContribs(client *github.Client, query string, date time.Time, days in
             count,_,err := contributors(client, *v.Owner.Login, *v.Name, date, days)
             if err != nil {
                 return nil, err
+            }
+            if count==0{
+                continue   
             }
             repo := models.RepoEntry{
                 FullName: *v.FullName,

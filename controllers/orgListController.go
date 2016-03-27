@@ -11,9 +11,9 @@ import (
     "github.com/andrewRyabchun/GithubPotentials/models"
     "github.com/andrewRyabchun/GithubPotentials/helpers"
 )
-const orgPagesCount = 3
+
 // GetOrgList GET /orgs/:criteria/:weeks
-func GetOrgList(client *github.Client, params martini.Params) (int, []byte){
+func GetOrgList(params martini.Params, req *http.Request) (int, []byte){
     weeks, err := strconv.Atoi(params["weeks"])
     if err != nil || weeks<1 || weeks>52 {
         return http.StatusBadRequest, nil
@@ -25,14 +25,14 @@ func GetOrgList(client *github.Client, params martini.Params) (int, []byte){
     result := models.OrgList{}
     switch params["criteria"] {
     case "total":
-        orgs, err := listOrgByTotalCommits(client,query,weeks)
+        orgs, err := listOrgByTotalCommits(query,weeks)
         if err != nil {
             return http.StatusInternalServerError, nil
         }
         result.Criteria="total"
         result.Items=orgs
     case "avg":
-        orgs, err := listOrgByAvgCommits(client,query,weeks)
+        orgs, err := listOrgByAvgCommits(query,weeks)
         if err != nil {
             return http.StatusInternalServerError, nil
         }
@@ -45,57 +45,77 @@ func GetOrgList(client *github.Client, params martini.Params) (int, []byte){
     if err != nil {
         return http.StatusInternalServerError, nil
     }
+    cache.Add(req.RequestURI, resp, expiration())
     return http.StatusOK, resp
 }
 
 
 
-func listOrgByTotalCommits(client *github.Client, query string, weeks int) ([]models.OrgEntry, error){
+func listOrgByTotalCommits(query string, weeks int) ([]models.OrgEntry, error){
     var orgResult models.OrgSort
-    i:=0
-    opt:=&github.SearchOptions{
-        Sort:   "followers",
-        Order:  "asc",
-        ListOptions: github.ListOptions{
-            PerPage:100,
-        },
-    }  
-    for {           
-        i++
-        println("search users (orgs ttl)")
-        orgs, resp, err := client.Search.Users(query, opt)
-        if err!=nil{
-            return nil, err
+    orgs,err := searchOrgs(query)
+    if err != nil {
+        return nil, err
+    }
+    for _,org:= range orgs{                   
+        orgCommits, err:=getCommitsByOrg(*org.Login,weeks)
+        if err != nil {
+            return nil,err
         }
-       
-        for _,org:= range orgs.Users{                   
-            repoCommits, err:=getTotalCommitsByOrg(client,*org.Login,weeks)
-            if err != nil {
-                return nil,err
-            }
-            if repoCommits==0 {
-                continue
-            }           
-            repoCommitsFl := float32(repoCommits)
-            result:=models.OrgEntry{
-                Name: *org.Login,
-                SortingCriteria: repoCommitsFl,
-            }
-            orgResult = append(orgResult, result)
-            
+        if orgCommits==0 {
+            continue
+        }           
+        orgCommitsFl := float32(orgCommits)
+        result:=models.OrgEntry{
+            Name: *org.Login,
+            SortingCriteria: orgCommitsFl,
         }
-       
-        if resp.NextPage == 0 || i==orgPagesCount {
-            break
-        }
-        opt.Page = resp.NextPage
+        orgResult = append(orgResult, result)
+        
     }
     sort.Sort(orgResult)
     return orgResult, nil
 }
 
-func listOrgByAvgCommits(client *github.Client, query string, weeks int) ([]models.OrgEntry, error){
+func listOrgByAvgCommits(query string, weeks int) ([]models.OrgEntry, error){
     var orgResult models.OrgSort
+    orgs,err := searchOrgs(query)
+    if err != nil {
+        return nil,err
+    }
+    for _,org:= range orgs{              
+        orgCommits, err:=getCommitsByOrg(*org.Login,weeks)
+        if err != nil {
+            return nil, err
+        }
+        if orgCommits==0 {
+            continue
+        }
+        
+        members, err := orgMembersCount(*org.Login)
+        if err != nil {
+            return nil, err
+        }
+        if members==0{
+            continue
+        }
+        avgCommits := float32(orgCommits)/float32(members)
+        
+        result:=models.OrgEntry{
+            Name: *org.Login,
+            SortingCriteria: avgCommits,
+        }
+        
+        orgResult = append(orgResult, result)
+    }
+    sort.Sort(orgResult)
+    return orgResult, nil
+}
+
+func searchOrgs(query string) ([]github.Organization,error){
+    if cached,is:=cache.Get("orgsearch:"+query);is{
+        return cached.([]github.Organization), nil
+    }
     i:=0
     opt:=&github.SearchOptions{
         Sort:   "followers",
@@ -104,73 +124,48 @@ func listOrgByAvgCommits(client *github.Client, query string, weeks int) ([]mode
             PerPage:100,
         },
     }
+    var organizations []github.Organization
     for {           
         i++
-        println("search users (orgs avg)")
         orgs, resp, err := client.Search.Users(query, opt)
         if err!=nil{
             return nil, err
         }
         for _,orgUser:= range orgs.Users{
-                      
-            repoCommits, err:=getTotalCommitsByOrg(client,*orgUser.Login,weeks)
-            if repoCommits==0 {
-                continue
-            }
-            println("org get (for user, in avg)")    
             org, _, err := client.Organizations.Get(*orgUser.Login)
-            if err != nil || org.Collaborators==nil || *org.Collaborators==0{
+            if err != nil{
                 continue
             } 
-            members, err := orgMembersCount(client,*orgUser.Login)
-            if err != nil {
-                return nil, err
-            }
-            if members==0{
-                continue
-            }
-            avgCommits := float32(repoCommits)/float32(members)
-            if err != nil {
-                return nil,err
-            }
-            
-            result:=models.OrgEntry{
-                Name: *orgUser.Login,
-                SortingCriteria: avgCommits,
-            }
-            
-            
-            orgResult = append(orgResult, result)
+            organizations = append(organizations, *org)            
         }
-       
         if resp.NextPage == 0 || i==orgPagesCount {
             break
         }
         opt.Page = resp.NextPage
     }
-    sort.Sort(orgResult)
-    return orgResult, nil
+    cache.Add("orgsearch:"+query, organizations, expiration())
+    return organizations, nil
 }
 
-func getTotalCommitsByOrg(client *github.Client, org string, weeks int) (int, error){    
-    repos,err:=reposByOrg(client,org)
+
+func getCommitsByOrg(org string, weeks int) (int, error){ 
+    var repos []github.Repository    
+    repos,err:=reposByUser(org)
     if err != nil {
         return -1, err
     }
-    
+ 
     totalCommits := 0
     for _,repo := range repos{
         if *repo.StargazersCount == 0 || *repo.Size==0 || *repo.Fork{
             continue
         }
-        println("repos listCommits (orgs)")
         parts, resp, err := client.Repositories.ListParticipation(org, *repo.Name)
         if err != nil {
             return -1, err
         }
         for resp.StatusCode==202{
             time.Sleep(1000*1000*1000*1) //1 seconds
-            println("repos listCommits retry (orgs)")
             parts, resp, err = client.Repositories.ListParticipation(org, *repo.Name)
                 if err != nil {
                     return -1, err
@@ -180,8 +175,7 @@ func getTotalCommitsByOrg(client *github.Client, org string, weeks int) (int, er
             continue
         }
         selected := parts.All[52-weeks:52]
-        
-        
+               
         for _,v := range selected{
             totalCommits+=v
         }   
@@ -189,38 +183,17 @@ func getTotalCommitsByOrg(client *github.Client, org string, weeks int) (int, er
     return totalCommits, nil   
 }
 
-func reposByOrg(client *github.Client, org string) ([]github.Repository, error){
-    opt:=&github.RepositoryListByOrgOptions{
-        ListOptions: github.ListOptions{
-            PerPage:100,
-        }, 
-    }
-    var repos []github.Repository
-    
-    for {
-        println("get repos by org")
-        result, resp, err := client.Repositories.ListByOrg(org, opt)
-        if err!=nil{
-            return nil, err
-        }
-        repos = append(repos, result...)
-     
-        if resp.NextPage == 0 {
-            break
-        }
-        opt.Page = resp.NextPage
-    }
-    
-    return repos,nil
-}
 
-func orgMembersCount(client *github.Client, org string)(int, error){
+func orgMembersCount(org string)(int, error){
+    if cached,is:=cache.Get("org-members:"+org);is{
+        return cached.(int), nil
+    }
+    
     opt:=&github.ListMembersOptions{
         ListOptions:github.ListOptions{PerPage:100},
     }
     var totalMembers int
     for {
-        println("get org members")
         members, resp, err := client.Organizations.ListMembers(org, opt)
         if err!=nil{
             return 0, err
@@ -231,5 +204,6 @@ func orgMembersCount(client *github.Client, org string)(int, error){
         }
         opt.Page = resp.NextPage
     }
+    cache.Add("org-members:"+org, totalMembers, expiration())
     return totalMembers, nil
 }

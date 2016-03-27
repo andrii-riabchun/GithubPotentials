@@ -1,7 +1,6 @@
 package helpers
 
 import (
-    "fmt"
     "encoding/json"
     "os"
 )
@@ -30,13 +29,11 @@ func LoadConfigFromFile(path string) (*Configuration, error){
 func (conf *Configuration) SaveConfigToFile(path string) error{
     file, err := os.Open(path)
     if err !=nil {
-        fmt.Println("error:",err)
-               return err
+        return err
     }
     encoder := json.NewEncoder(file)
     err = encoder.Encode(conf)
     if err != nil {
-        fmt.Println("error:", err)
         return err
     }
     return nil

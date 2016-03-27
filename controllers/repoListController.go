@@ -11,9 +11,9 @@ import (
     "github.com/andrewRyabchun/GithubPotentials/models"
     "github.com/andrewRyabchun/GithubPotentials/helpers"
 )
-const repoPagesCount = 1
+
 // GetRepoList GET /repos/:criteria/:weeks
-func GetRepoList(client *github.Client, params martini.Params) (int, []byte){
+func GetRepoList(params martini.Params, req *http.Request) (int, []byte){
     weeks, err := strconv.Atoi(params["weeks"])
     if err != nil || weeks<1 || weeks>52 {
         return http.StatusBadRequest, nil
@@ -26,21 +26,21 @@ func GetRepoList(client *github.Client, params martini.Params) (int, []byte){
     result := models.RepoList{}
     switch params["criteria"] {
     case "stars":
-        repos, err := listByStars(client,query,date,days)
+        repos, err := listByStars(query,date,days)
         if err != nil {
             return http.StatusInternalServerError, nil
         }
         result.Criteria="stars"
         result.Items=repos
     case "commits":
-        repos, err := listByCommits(client,query,date,days)
+        repos, err := listByCommits(query,date,days)
         if err != nil {
             return http.StatusInternalServerError, nil
         }
         result.Criteria="commits"
         result.Items=repos
     case "contribs":
-        repos, err := listByContribs(client,query,date,days)
+        repos, err := listByContribs(query,date,days)
         if err != nil {
             return http.StatusInternalServerError, nil
         }
@@ -53,95 +53,89 @@ func GetRepoList(client *github.Client, params martini.Params) (int, []byte){
     if err != nil {
         return http.StatusInternalServerError, nil
     }
+    cache.Add(req.RequestURI, resp, expiration())
     return http.StatusOK, resp
 }
 
-func listByStars(client *github.Client, query string, date time.Time, days int) ([]models.RepoEntry, error){
-    i:=0
-    opt:=&github.SearchOptions{
-        Sort:   "stars",
-        Order:  "asc",
-        ListOptions: github.ListOptions{
-            PerPage:100,
-        },
-    }
+func listByStars(query string, date time.Time, days int) ([]models.RepoEntry, error){
     var repos models.RepoSort
-    
-    for {           
-        i++
-        println("search repos (list by stars)")
-        result, resp, err := client.Search.Repositories(query, opt)
-        if err!=nil{
+    result, err := searchRepos(query)
+    if err != nil {
+        return nil,err
+    }
+    for _,v:= range result{
+        count,_,err := stars(*v.Owner.Login, *v.Name, date, days, true)
+        if err != nil {
             return nil, err
         }
-        
-        for _,v:= range result.Repositories{
-            count,_,err := stars(client, *v.Owner.Login, *v.Name, date, days, true)
-            if err != nil {
-                return nil, err
-            }
-            if count==0{
-                continue
-            }
-            repo := models.RepoEntry{
-                FullName: *v.FullName,
-                SortingCriteria: count,
-            }
-            repos = append(repos, repo)
+        if count==0{
+            continue
         }
-       
-        if resp.NextPage == 0 || i==repoPagesCount {
-            break
+        repo := models.RepoEntry{
+            FullName: *v.FullName,
+            SortingCriteria: count,
         }
-        opt.Page = resp.NextPage
+        repos = append(repos, repo)
+    }
+
+    sort.Sort(repos)
+    return repos, nil
+}
+
+func listByCommits(query string, date time.Time, days int) ([]models.RepoEntry, error){
+    var repos models.RepoSort
+    
+    result, err := searchRepos(query)
+    if err != nil {
+        return nil,err
+    }
+    for _,v:= range result{
+        count,_,err := commits(*v.Owner.Login, *v.Name, date, days)
+        if err != nil {
+            return nil, err
+        }
+        if count==0{
+            continue
+        }
+        repo := models.RepoEntry{
+            FullName: *v.FullName,
+            SortingCriteria: count,
+        }
+        repos = append(repos, repo)
     }
     sort.Sort(repos)
     return repos, nil
 }
 
-func listByCommits(client *github.Client, query string, date time.Time, days int) ([]models.RepoEntry, error){
-    i:=0
-    opt:=&github.SearchOptions{
-        Sort:   "stars",
-        Order:  "asc",
-        ListOptions: github.ListOptions{
-            PerPage:100,
-        },
-    }
+func listByContribs(query string, date time.Time, days int) ([]models.RepoEntry, error){
     var repos models.RepoSort
-    
-    for {           
-        i++
-        println("search repos (list by commits)")
-        result, resp, err := client.Search.Repositories(query, opt)
-        if err!=nil{
+    result, err := searchRepos(query)
+    if err != nil {
+        return nil,err
+    }
+    for _,v:= range result{
+        count,_,err := contributors(*v.Owner.Login, *v.Name, date, days)
+        if err != nil {
             return nil, err
         }
-        for _,v:= range result.Repositories{
-            count,_,err := commits(client, *v.Owner.Login, *v.Name, date, days)
-            if err != nil {
-                return nil, err
-            }
-            if count==0{
-                continue
-            }
-            repo := models.RepoEntry{
-                FullName: *v.FullName,
-                SortingCriteria: count,
-            }
-            repos = append(repos, repo)
+        if count==0{
+            continue   
         }
-       
-        if resp.NextPage == 0 || i==repoPagesCount {
-            break
+        repo := models.RepoEntry{
+            FullName: *v.FullName,
+            SortingCriteria: count,
         }
-        opt.Page = resp.NextPage
+        repos = append(repos, repo)
     }
+       
     sort.Sort(repos)
     return repos, nil
 }
 
-func listByContribs(client *github.Client, query string, date time.Time, days int) ([]models.RepoEntry, error){
+func searchRepos(query string) ([]github.Repository,error){
+    if cached,is:=cache.Get("reposearch:"+query);is{
+        return cached.([]github.Repository), nil
+    }
     i:=0
     opt:=&github.SearchOptions{
         Sort:   "stars",
@@ -150,36 +144,22 @@ func listByContribs(client *github.Client, query string, date time.Time, days in
             PerPage:100,
         },
     }
-    var repos models.RepoSort
+    
+    var repos []github.Repository
     
     for {           
         i++
-        println("search repos (list by contribs)")
         result, resp, err := client.Search.Repositories(query, opt)
         if err!=nil{
             return nil, err
         }
-        
-        for _,v:= range result.Repositories{
-            count,_,err := contributors(client, *v.Owner.Login, *v.Name, date, days)
-            if err != nil {
-                return nil, err
-            }
-            if count==0{
-                continue   
-            }
-            repo := models.RepoEntry{
-                FullName: *v.FullName,
-                SortingCriteria: count,
-            }
-            repos = append(repos, repo)
-        }
+        repos = append(repos,result.Repositories...)
        
         if resp.NextPage == 0 || i==repoPagesCount {
             break
         }
         opt.Page = resp.NextPage
     }
-    sort.Sort(repos)
+    cache.Add("reposearch:"+query, repos, expiration())
     return repos, nil
 }

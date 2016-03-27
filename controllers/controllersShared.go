@@ -7,13 +7,13 @@ import (
 )
 
 const (
-    repoPagesCount = 5
+    repoPagesCount = 3
     orgPagesCount = 2
 )
 
 var client *github.Client
 var cache inmem.Cache
-const expirationSeconds = 3600 // 1 hour
+const expirationMinutes = 60
 
 // Init services
 func Init(cacheArg *inmem.Cache, clientArg *github.Client){
@@ -22,7 +22,7 @@ func Init(cacheArg *inmem.Cache, clientArg *github.Client){
 }
 
 func expiration() time.Time{
-    return time.Now().Add(1000*1000*1000*expirationSeconds)
+    return time.Now().Add(time.Minute*expirationMinutes)
 }
 
 func reposByUser(user string) ([]github.Repository, error){

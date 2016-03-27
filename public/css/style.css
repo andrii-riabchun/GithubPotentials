@@ -26,9 +26,9 @@ article, header, footer{
 }
 
 ::selection{
-    background: #6F5499;
+    background: #aF94f9;
 }
 
 ::-moz-selection{
-    background: #6F5499;
+    background: #aF94f9;
 }

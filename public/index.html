@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="css/foundation.css" />
     <link rel="stylesheet" href="css/style.css"/>
     <script src="js/chart.js"></script>
-        <script src="js/jquery.js"></script>
+    <script src="js/jquery.js"></script>
     <script src="js/foundation.js"></script>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
   </head>
   <body>
     <div class="small-12 medium-8 medium-centered columns">
@@ -26,74 +27,106 @@
             </ul>
             <div class="tabs-content" data-tabs-content="main-tabs">
                 <div class="tabs-panel is-active" id="repos-panel">
-                        <div class="row">
-                            <label class="large-4 columns">Number of weeks:
-                                <input type="number" value="1" min="1" max="52" placeholder="period">
-                            </label>
-                            <label class="large-4 columns">Select criteria:
-                                <select>
-                                    <option value="commits">Commits</option>
-                                    <option value="contris">Unique contributors</option>
-                                    <option value="stars">New stargazers</option>
-                                </select>
-                            </label>
-                            <label>&nbsp;
-                            <div class="large-4 columns">
-                                <button class="button small-12">Go</button>
-                            </div>
-                            </label>      
-                                              
+                    <div class="row">
+                        <label class="large-4 columns">Number of weeks:
+                            <input id="repos-timespan" type="number" value="1" min="1" max="52" placeholder="period">
+                        </label>
+                        <label class="large-4 columns">Select criteria:
+                            <select id="repos-criteria-select">
+                                <option value="commits">Commits</option>
+                                <option value="contris">Unique contributors</option>
+                                <option value="stars">New stargazers</option>
+                            </select>
+                        </label>
+                        <label>&nbsp;
+                        <div class="large-4 columns">
+                            <button class="button small-12" id="repos-button">Go</button>
                         </div>
-                    <div class="medium-4 medium-centered" id="repos-spinner" hidden>
+                        </label>                                                   
+                        </div>
+                    <div class="medium-2 medium-centered" id="repos-spinner" hidden>
                         <img src="img/spinner.svg"/> 
                     </div>
-                    <table class="hover stack" id="repos-table" hidden>
+                    <div class="callout alert" id="repos-callout" hidden>
+                    </div>
+                    <table class="hover" id="repos-table" hidden>
                         <caption>Repositories</caption>
                         <thead>
                             <tr>
-                            <th width="100">Rank</th>
+                            <th class="medium-2">Rank</th>
                             <th>Repository</th>
-                            <th width="150" id="repo-criteria-header">Criteria value</th>
+                            <th class="medium-2">Criteria value</th>
                             </tr>
                         </thead>
-                        <tbody>
-
-                        </tbody>
+                        <tbody id="repos-table-body"></tbody>
+                        
                     </table>
                 </div>
                 <div class="tabs-panel" id="orgs-panel">
-                        <div class="row">
-                            <label class="large-4 columns">Number of weeks:
-                                <input type="number" value="1" min="1" max="52" placeholder="period">
-                            </label>
-                            <label class="large-4 columns">Select criteria:
-                                <select>
-                                    <option value="total">Total Commits</option>
-                                    <option value="avg">Commits per members</option>
-                                </select>
-                            </label>
-                            <label>&nbsp;
-                            <div class="large-4 columns">
-                                <button class="button small-12">Go</button>
-                            </div>
-                            </label>                        
+                    <div class="row">
+                        <label class="large-4 columns">Number of weeks:
+                            <input id="orgs-timespan" type="number" value="1" min="1" max="52" placeholder="period">
+                        </label>
+                        <label class="large-4 columns">Select criteria:
+                            <select id="orgs-criteria-select">
+                                <option value="total">Total Commits</option>
+                                <option value="avg">Commits per members</option>
+                            </select>
+                        </label>
+                        <label>&nbsp;
+                        <div class="large-4 columns">
+                            <button class="button small-12" id="orgs-button">Go</button>
                         </div>
+                        </label>                        
+                    </div>
+                    <div class="medium-2 medium-centered" id="orgs-spinner" hidden>
+                        <img src="img/spinner.svg"/> 
+                    </div>
+                    <div class="callout alert" id="orgs-callout" hidden>
+                    </div>
+                    <table class="hover" id="orgs-table" hidden>
+                        <caption>Organizations</caption>
+                        <thead>
+                            <tr>
+                            <th class="medium-2">Rank</th>
+                            <th>Organization</th>
+                            <th class="medium-2">Criteria value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orgs-table-body"></tbody>
+                        
+                    </table>
                 </div>
-                <div class="tabs-panel " id="repoinfo-panel">
-                        <div class="row">
-                            <label class="large-6 columns">Repository:
-                                <input type="text" placeholder="owner/repo">
-                            </label>
-                            <label class="large-4 columns">Stats for the last <i>n</i> days:
-                                <input type="text" placeholder="period">
-                            </label>
-                            <label>&nbsp;
-                            <div class="large-2 columns">
-                                <button class="button small-12">Go</button>
-                            </div>
-                            </label>                        
+                <div class="tabs-panel" id="repoinfo-panel">
+                    <div class="row">
+                        <label class="large-6 columns">Repository:
+                            <input id="repoinfo-fullname" type="text" placeholder="owner/repo">
+                        </label>
+                        <label class="large-4 columns">Stats for the last <i>n</i> days:
+                            <input id="repoinfo-timespan" type="number" min="1" max="30" placeholder="period">
+                        </label>
+                        <label>&nbsp;
+                        <div class="large-2 columns">
+                            <button class="button small-12" id="repoinfo-button">Go</button>
                         </div>
-                    <canvas id="canvas" height="400"/>
+                        </label>                        
+                    </div>
+                    <div class="callout alert" id="repoinfo-callout" hidden>
+                    </div>
+                    <div class="row">
+                        <div class="small-2 small-centered columns" id="repoinfo-spinner" hidden>
+                            <img src="img/spinner.svg"/> 
+                        </div>
+                        <div class="row columns" id="repoinfo-container" hidden>
+                            <table class="large-4 columns" id="repoinfo-info">
+                            </table>
+                            
+                            <div class="large-8 small-12 columns">
+                                <canvas id="repoinfo-canvas"/>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </article>
@@ -105,6 +138,7 @@
 
     <script>
       $(document).foundation();
+
     </script>
     <script src="js/app.js"></script>
     

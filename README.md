@@ -11,4 +11,4 @@ Under [ghp](https://github.com/ArtIsResistance/GithubPotentials/tree/master/ghp/
 `go get github.com/artisresistance/githubpotentials/ghp`
 
 You must provide config file that contains your Github API secret token.
-Example output you can find [here](https://githubpotentials.azure.net/data.json).
+Example output you can find [here](https://githubpotentials.azurewebsites.net/data.json).

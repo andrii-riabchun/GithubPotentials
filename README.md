@@ -1,18 +1,14 @@
 # Github Potentials
 
-Github Potentials is service that allows you to:
-  - Show stats for selected repository.
-  - Browse the most popular of the the newest repositories.
-  - List perspective organizations with great leap in recent activity.
+Github Potentials command line tool is package that allows you to find rising Github repositories in 3 steps:
+  - Fetch 1k recently updated repositories.
+  - Count stats for last *n* hours/days: new stars, unique contributors and commits.
+  - Sort by selected criteria and take the best of them.
 
-It can take a long time to create list of repos and organizations - up to five minutes - so please be patient, sit back and relax while it processes your request.
+### Command line tool
+Under [cmd](https://github.com/ArtIsResistance/GithubPotentials/tree/master/ghp/main.go) directory you can see an example of using this package.
 
-### Architecture
+`go get github.com/artisresistance/githubpotentials/ghp`
 
-Frontend is built as Single Page Application with JS, while Golang-based backend serves some kind of REST Web API.
-
-* Foundation - beautiful page layout framework.
-* jQuery - manipulate browser DOM-tree with JS.
-* Chart.js - chart drawing.
-* go-martini - fast and simple golang web framowork.
-* facebookgo/inmem - who needs memcached?
+You must provide config file that contains your Github API secret token.
+Example output you can find [here](https://githubpotentials.azure.net/data.json).

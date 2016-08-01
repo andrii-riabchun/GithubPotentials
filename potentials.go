@@ -76,7 +76,6 @@ func (i instance) SearchIterator(pagesCount int, onError ErrorHandler) Repositor
 			i.lastUpdated.Year(),
 			i.lastUpdated.Month(),
 			i.lastUpdated.Day())
-		in:=0
 		for {
 			result, resp, err := i.client.Search.Repositories(query, opt)
 			if err != nil {
@@ -88,8 +87,6 @@ func (i instance) SearchIterator(pagesCount int, onError ErrorHandler) Repositor
 
 			for _, repo := range result.Repositories {
 				casted := castRepository(repo)
-				in++
-				println(in, casted.Owner, casted.Name)
 				out <- RepositoryMessage{&casted, resp.Remaining, nil}
 			}
 

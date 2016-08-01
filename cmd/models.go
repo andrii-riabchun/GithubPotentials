@@ -1,36 +1,35 @@
 package main
 
 import (
-    "io"
-    "encoding/json"
+	"encoding/json"
+	"io"
 
-    potentials "github.com/artisresistance/githubpotentials"
+	potentials "github.com/artisresistance/githubpotentials"
 )
 
-type Config struct{
-    Token string
-    OutCount int
+type config struct {
+	Token    string
+	OutCount int
 }
 
-func LoadConfig(r io.ReadCloser) (Config, error) {
-    defer r.Close()
-    conf := Config{}
+func loadConfig(r io.ReadCloser) (config, error) {
+	defer r.Close()
+	conf := config{}
 
-    err := json.NewDecoder(r).Decode(&conf)
+	err := json.NewDecoder(r).Decode(&conf)
 
-    return conf, err
+	return conf, err
 }
 
-type PotentialsResult struct{
-    Updated int64
-    Fetched int
-    SortedBy string
-    Errors int
-    Items []potentials.Repository
+type potentialsResult struct {
+	Updated  int64
+	Fetched  int
+	SortedBy string
+	Errors   int
+	Items    []potentials.Repository
 }
 
-
-func (r PotentialsResult) Write(wc io.WriteCloser) error {
-    err := json.NewEncoder(wc).Encode(r)
-    return err
+func (r potentialsResult) Write(wc io.WriteCloser) error {
+	err := json.NewEncoder(wc).Encode(r)
+	return err
 }

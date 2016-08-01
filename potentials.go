@@ -60,8 +60,7 @@ func (i instance) SearchIterator(date time.Time) RepositoriesChannel {
 		for {
 			result, resp, err := i.client.Search.Repositories(query, opt)
 			if err != nil {
-				fmt.Println(err)
-				out <- RepositoryMessage{nil, -1, err}
+				fmt.Println(err)	
 			}
 
 			for _, repo := range result.Repositories {

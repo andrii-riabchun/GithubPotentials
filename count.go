@@ -3,7 +3,6 @@ package githubpotentials
 import (
 	"time"
 	"github.com/google/go-github/github"
-	"github.com/emirpasic/gods/sets/hashset"
 )
 
 func (i instance) countContributors(owner, repo string, date time.Time) (int, error) {
@@ -11,7 +10,7 @@ func (i instance) countContributors(owner, repo string, date time.Time) (int, er
 		Since:       date,
 		ListOptions: github.ListOptions{PerPage: i.resultsPerPage},
 	}
-	set := hashset.New()
+	counter := newUniqueCounter()
 
 	for {
 		commits, resp, err := i.client.Repositories.ListCommits(owner, repo, opt)
@@ -21,9 +20,9 @@ func (i instance) countContributors(owner, repo string, date time.Time) (int, er
 
 		for _, commit := range commits {
 			if commit.Author != nil {
-				set.Add(*commit.Author.ID)
+				counter.Add(*commit.Author.ID)
 			} else if commit.Committer != nil {
-				set.Add(*commit.Committer.ID)
+				counter.Add(*commit.Committer.ID)
 			}
 		}
 
@@ -32,7 +31,7 @@ func (i instance) countContributors(owner, repo string, date time.Time) (int, er
 		}
 		opt.Page = resp.NextPage
 	}
-	return set.Size(), nil
+	return counter.Count(), nil
 }
 
 func (i instance) countCommits(owner, repo string, date time.Time) (int, error) {

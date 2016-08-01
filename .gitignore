@@ -1,3 +1,4 @@
-config.json
+cmd/config.json
+cmd/data.json
 *.exe
 vendor/*/

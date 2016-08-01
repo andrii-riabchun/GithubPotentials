@@ -4,20 +4,61 @@ import (
 	"github.com/google/go-github/github"
 )
 
-type RepositoriesChannel <-chan RepositoryMessage
+type RepositoryChannel <-chan RepositoryMessage
 
-func (in RepositoriesChannel) Dump() RepositoryCollection {
+func (in RepositoryChannel) FilterZeroStats(criteria SortCriteria) RepositoryChannel {
+	out := make(chan RepositoryMessage)
+
+	isAcceptable := func(repoMsg RepositoryMessage) bool { return false }
+	switch criteria {
+	case CommitsCriteria:
+		isAcceptable = func(repoMsg RepositoryMessage) bool {
+			return repoMsg.repository.Commits > 0
+		}
+		break
+	case StarsCriteria:
+		isAcceptable = func(repoMsg RepositoryMessage) bool {
+			return repoMsg.repository.Stars > 0
+		}
+		break
+	case ContributorsCriteria:
+		isAcceptable = func(repoMsg RepositoryMessage) bool {
+			return repoMsg.repository.Contribs > 0
+		}
+		break
+	case CombinedCriteria:
+		isAcceptable = func(repoMsg RepositoryMessage) bool {
+			return repoMsg.repository.Contribs+
+				repoMsg.repository.Commits+
+				repoMsg.repository.Stars > 0
+		}
+		break
+	}
+
+	go func() {
+		for repo := range in {
+			if isAcceptable(repo) {
+				out <- repo
+			}
+		}
+
+		close(out)
+	}()
+	return out
+}
+
+func (in RepositoryChannel) Dump(onError ErrorHandler) RepositoryCollection {
 	var result []Repository
 	for repoMsg := range in {
 		if repoMsg.err != nil {
+			onError(repoMsg.err)
 			continue
 		}
 
 		result = append(result, *repoMsg.repository)
 
-		println(len(result))
-
 		if repoMsg.apiCallsRemained == 0 {
+			onError(errAPIRateExceded)
 			break
 		}
 	}
@@ -39,26 +80,34 @@ type RepositoryMessage struct {
 }
 
 type Repository struct {
-	owner       string
-	name        string
-	description string
-	homepage    string
-	license     string
-	language    string
-	commits     int
-	stars       int
-	contribs    int
+	Owner       string
+	Name        string
+	Description string
+	Homepage    string
+	License     string
+	Language    string
+	Commits     int
+	Stars       int
+	Contribs    int
 }
 
 func castRepository(src github.Repository) Repository {
 	result := Repository{
-		owner: *src.Owner.Login,
-		name: *src.Name,
+		Owner: *src.Owner.Login,
+		Name:  *src.Name,
 	}
-	if src.Description 	!= nil { result.description = *src.Description }
-	if src.Homepage 	!= nil { result.homepage = *src.Homepage }
-	if src.Language 	!= nil { result.language = *src.Language}
-	if src.License 		!= nil && src.License.Name != nil { result.license = *src.License.Name }
+	if src.Description != nil {
+		result.Description = *src.Description
+	}
+	if src.Homepage != nil {
+		result.Homepage = *src.Homepage
+	}
+	if src.Language != nil {
+		result.Language = *src.Language
+	}
+	if src.License != nil && src.License.Name != nil {
+		result.License = *src.License.Name
+	}
 
 	return result
 }

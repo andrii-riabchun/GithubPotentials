@@ -1,15 +1,15 @@
 package githubpotentials
 
 import (
-	"time"
-	"github.com/google/go-github/github"
 	"github.com/emirpasic/gods/sets/hashset"
+	"github.com/google/go-github/github"
+	"time"
 )
 
-func (i instance) countContributors(owner, repo string, date time.Time) (int, error) {
+func (i instance) countContributors(owner, repo string) (int, error) {
 	opt := &github.CommitsListOptions{
-		Since:       date,
-		ListOptions: github.ListOptions{PerPage: i.resultsPerPage},
+		Since:       i.lastUpdated,
+		ListOptions: github.ListOptions{PerPage: resultsPerPage},
 	}
 	set := hashset.New()
 
@@ -35,10 +35,10 @@ func (i instance) countContributors(owner, repo string, date time.Time) (int, er
 	return set.Size(), nil
 }
 
-func (i instance) countCommits(owner, repo string, date time.Time) (int, error) {
+func (i instance) countCommits(owner, repo string) (int, error) {
 	opt := &github.CommitsListOptions{
-		Since:       date,
-		ListOptions: github.ListOptions{PerPage: i.resultsPerPage},
+		Since:       i.lastUpdated,
+		ListOptions: github.ListOptions{PerPage: resultsPerPage},
 	}
 
 	totalCommits := 0
@@ -58,8 +58,8 @@ func (i instance) countCommits(owner, repo string, date time.Time) (int, error) 
 	return totalCommits, nil
 }
 
-func (i instance) countStars(owner, repo string, date time.Time) (int, error) {
-	opt := &github.ListOptions{PerPage: i.resultsPerPage}
+func (i instance) countStars(owner, repo string) (int, error) {
+	opt := &github.ListOptions{PerPage: resultsPerPage}
 
 	totalStars := 0
 
@@ -69,7 +69,7 @@ func (i instance) countStars(owner, repo string, date time.Time) (int, error) {
 			return 0, err
 		}
 
-		filtered := filter(stargazers, filterPredicate(date))
+		filtered := filter(stargazers, isStarredAfter(i.lastUpdated))
 		totalStars += len(filtered)
 
 		if resp.NextPage == 0 {
@@ -81,7 +81,6 @@ func (i instance) countStars(owner, repo string, date time.Time) (int, error) {
 	return totalStars, nil
 }
 
-// what if I put these inside countStars??
 func filter(src []*github.Stargazer, f func(*github.Stargazer) bool) []*github.Stargazer {
 	var dest []*github.Stargazer
 	for _, v := range src {
@@ -92,8 +91,7 @@ func filter(src []*github.Stargazer, f func(*github.Stargazer) bool) []*github.S
 	return dest
 }
 
-// yeah, currying!
-func filterPredicate(t time.Time) func(*github.Stargazer) bool {
+func isStarredAfter(t time.Time) func(*github.Stargazer) bool {
 	return func(s *github.Stargazer) bool {
 		return s.StarredAt.Time.After(t)
 	}

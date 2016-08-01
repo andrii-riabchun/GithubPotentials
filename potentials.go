@@ -3,65 +3,87 @@ package githubpotentials
 import (
 	"errors"
 	"fmt"
-	"github.com/google/go-github/github"
-	"golang.org/x/oauth2"
 	"sync"
 	"time"
+
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
+
+const formatableQuery = "stars:>10 size:>1 pushed:>%04d-%02d-%02d"
+const resultsPerPage = 100
 
 var errAPIRateExceded = errors.New("api rate exceeded")
 
+// ErrorHandler callback allows you to catch/log/report errors.
+type ErrorHandler func(error)
+
+// Potentials is main worker of package.
 type Potentials interface {
-	SearchIterator(date time.Time) RepositoriesChannel
-	SetCriterias(in RepositoriesChannel, date time.Time) RepositoriesChannel
-	GetAPIRates() string
+	SearchIterator(ErrorHandler) RepositoryChannel
+	CountStats(RepositoryChannel, ErrorHandler) RepositoryChannel
+	GetAPIRates() (string, error)
 }
 
 type instance struct {
-	client         *github.Client
-	resultsPerPage int
+	client      *github.Client
+	lastUpdated time.Time
 }
 
 // New returns new instance of package.
 // token - github api token.
-func New(token string, resultsPerPage int) Potentials {
+func New(token string, lastUpdate time.Time) Potentials {
 	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
 	tokenClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
 
 	return instance{
-		client:         github.NewClient(tokenClient),
-		resultsPerPage: resultsPerPage,
+		client:      github.NewClient(tokenClient),
+		lastUpdated: lastUpdate,
 	}
 }
 
-func (i instance) GetAPIRates() string{
+func (i instance) GetAPIRates() (string, error) {
 	r, _, err := i.client.RateLimits()
 	if err != nil {
-		return err.Error()
+		return "", err
 	}
-	return fmt.Sprintf("%d of %d. Reset: %v", r.Core.Remaining, r.Core.Limit, r.Core.Reset)
+	return fmt.Sprintf("%d of %d. Reset: %v", r.Core.Remaining, r.Core.Limit, r.Core.Reset), nil
 }
 
-// SearchIterator returns iterable channel of all search results
-func (i instance) SearchIterator(date time.Time) RepositoriesChannel {
+func (i instance) getCoreRemainingRate() int {
+	r, _, err := i.client.RateLimits()
+	if err != nil {
+		return -1
+	}
+	return r.Core.Remaining
+}
+
+// SearchIterator returns iterable channel of all search results.
+// Return all repositories that were updated after specified date.
+func (i instance) SearchIterator(onError ErrorHandler) RepositoryChannel {
 	out := make(chan RepositoryMessage)
 
 	go func() {
 		opt := &github.SearchOptions{
 			Sort:        "stars",
 			Order:       "asc",
-			ListOptions: github.ListOptions{PerPage: i.resultsPerPage},
+			ListOptions: github.ListOptions{PerPage: resultsPerPage},
 		}
 
-		query := fmt.Sprintf("stars:>10 size:>1 pushed:>%04d-%02d-%02d", date.Year(), date.Month(), date.Day())
+		query := fmt.Sprintf(formatableQuery,
+			i.lastUpdated.Year(),
+			i.lastUpdated.Month(),
+			i.lastUpdated.Day())
 
 		for {
 			result, resp, err := i.client.Search.Repositories(query, opt)
 			if err != nil {
-				fmt.Println(err)
-				out <- RepositoryMessage{nil, -1, err}
+				go onError(err)
+			}
+			if i.getCoreRemainingRate() < resultsPerPage {
+				break
 			}
 
 			for _, repo := range result.Repositories {
@@ -80,15 +102,12 @@ func (i instance) SearchIterator(date time.Time) RepositoriesChannel {
 	return out
 }
 
-func (i instance) SetCriterias(in RepositoriesChannel, date time.Time) RepositoriesChannel {
+func (i instance) CountStats(in RepositoryChannel, onError ErrorHandler) RepositoryChannel {
 	out := make(chan RepositoryMessage)
 	go func() {
 		for repo := range in {
-			//bypass
-			if repo.err != nil {
-				fmt.Println(repo.err.Error())
-				out <- repo
-				continue
+			if repo.apiCallsRemained == 0 {
+				break
 			}
 
 			joiner := new(sync.WaitGroup)
@@ -96,31 +115,34 @@ func (i instance) SetCriterias(in RepositoriesChannel, date time.Time) Repositor
 
 			go func() {
 				defer joiner.Done()
-				commitsCount, err := i.countCommits(repo.repository.owner, repo.repository.name, date)
+				commitsCount, err := i.countCommits(repo.repository.Owner, repo.repository.Name)
 				if err != nil {
+					go onError(err)
 					repo.err = err
 				} else {
-					repo.repository.commits = commitsCount
+					repo.repository.Commits = commitsCount
 				}
 			}()
 
 			go func() {
 				defer joiner.Done()
-				starsCount, err := i.countStars(repo.repository.owner, repo.repository.name, date)
+				starsCount, err := i.countStars(repo.repository.Owner, repo.repository.Name)
 				if err != nil {
+					go onError(err)
 					repo.err = err
 				} else {
-					repo.repository.stars = starsCount
+					repo.repository.Stars = starsCount
 				}
 			}()
 
 			go func() {
 				defer joiner.Done()
-				contribsCount, err := i.countContributors(repo.repository.owner, repo.repository.name, date)
+				contribsCount, err := i.countContributors(repo.repository.Owner, repo.repository.Name)
 				if err != nil {
+					go onError(err)
 					repo.err = err
 				} else {
-					repo.repository.contribs = contribsCount
+					repo.repository.Contribs = contribsCount
 				}
 			}()
 

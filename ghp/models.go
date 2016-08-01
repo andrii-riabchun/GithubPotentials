@@ -9,7 +9,9 @@ import (
 
 type config struct {
 	Token    string
+	OutputPath string
 	OutCount int
+	FetchPagesCount int
 }
 
 func loadConfig(r io.ReadCloser) (config, error) {

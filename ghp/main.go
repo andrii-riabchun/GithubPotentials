@@ -8,7 +8,6 @@ import (
 )
 
 const configPath = "config.json"
-const outputPath = "data.json"
 
 var conf config
 var startTime time.Time
@@ -46,7 +45,7 @@ func main() {
 
 	fmt.Println("sorting by:", criteria.String())
 
-	it := client.SearchIterator(onError)
+	it := client.SearchIterator(conf.FetchPagesCount, onError)
 
 	repos := client.CountStats(it, onError).
 		FilterZeroStats(criteria).
@@ -74,7 +73,8 @@ func main() {
 		Items:    trimmed,
 	}
 
-	err = writeToFile(out)
+	fmt.Println("writing result to", conf.OutputPath)
+	err = writeToFile(out, conf.OutputPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -84,7 +84,7 @@ func main() {
 	fmt.Printf("Execution time: %s", elapsed)
 }
 
-func writeToFile(result potentialsResult) error {
+func writeToFile(result potentialsResult, outputPath string) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
 		return err

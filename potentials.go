@@ -20,7 +20,7 @@ type ErrorHandler func(error)
 
 // Potentials is main worker of package.
 type Potentials interface {
-	SearchIterator(ErrorHandler) RepositoryChannel
+	SearchIterator(int, ErrorHandler) RepositoryChannel
 	CountStats(RepositoryChannel, ErrorHandler) RepositoryChannel
 	GetAPIRates() (string, error)
 }
@@ -62,7 +62,7 @@ func (i instance) getCoreRemainingRate() int {
 
 // SearchIterator returns iterable channel of all search results.
 // Return all repositories that were updated after specified date.
-func (i instance) SearchIterator(onError ErrorHandler) RepositoryChannel {
+func (i instance) SearchIterator(pagesCount int, onError ErrorHandler) RepositoryChannel {
 	out := make(chan RepositoryMessage)
 
 	go func() {
@@ -76,7 +76,7 @@ func (i instance) SearchIterator(onError ErrorHandler) RepositoryChannel {
 			i.lastUpdated.Year(),
 			i.lastUpdated.Month(),
 			i.lastUpdated.Day())
-
+		in:=0
 		for {
 			result, resp, err := i.client.Search.Repositories(query, opt)
 			if err != nil {
@@ -88,10 +88,12 @@ func (i instance) SearchIterator(onError ErrorHandler) RepositoryChannel {
 
 			for _, repo := range result.Repositories {
 				casted := castRepository(repo)
+				in++
+				println(in, casted.Owner, casted.Name)
 				out <- RepositoryMessage{&casted, resp.Remaining, nil}
 			}
 
-			if resp.NextPage == 0 {
+			if resp.NextPage == 0 || opt.Page == pagesCount-1 {
 				break
 			}
 			opt.Page = resp.NextPage

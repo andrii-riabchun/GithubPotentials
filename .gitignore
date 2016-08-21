@@ -1,4 +1,4 @@
-ghp/config.json
-ghp/data.json
+cmd/ghp/config.json
+cmd/ghp/data.json
 *.exe
 vendor/*/

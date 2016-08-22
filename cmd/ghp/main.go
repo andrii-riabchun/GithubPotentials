@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	potentials "github.com/artisresistance/githubpotentials"
 	"os"
 	"time"
@@ -28,7 +29,6 @@ func init() {
 		os.Exit(1)
 	}
 
-	fmt.Println("config loaded")
 }
 
 func main() {
@@ -41,50 +41,54 @@ func main() {
 		errCount++
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
-	criteria := potentials.CombinedCriteria
 
-	fmt.Println("sorting by:", criteria.String())
+	it := client.Search(conf.FetchPagesCount, onError)
+	demuxed := client.
+		CountStats(it, onError).
+		Split(3)
 
-	it := client.SearchIterator(conf.FetchPagesCount, onError)
 
-	repos := client.CountStats(it, onError).
-		FilterZeroStats(criteria).
-		Dump(onError).
-		Sort(criteria)
+	joiner := new(sync.WaitGroup)	
+	collected := make([]potentials.RepositoryCollection, 3)
+	for i, in := range demuxed {
+		joiner.Add(1)
+		go func(i int, in potentials.RepositoryChannel) {
+			defer joiner.Done()
+			criteria := potentials.SortCriteria(i)
+			repositories := in.FilterZeroStats(criteria).
+				Dump(onError).
+				Sort(criteria).
+				Trim(conf.OutCount)
+			collected[criteria] = repositories
+		}(i, in)
+	}
 
-	fmt.Println("done!")
-	fmt.Println("error count:", errCount)
-	rates, err := client.GetAPIRates()
+	joiner.Wait()
+
+	apiCalls, reset, err := client.GetAPIRates()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-	fmt.Println("rates:", rates)
-
-	fmt.Println("total fetched:", len(repos))
-	fmt.Println("selecting top", conf.OutCount)
-
-	trimmed := trim(repos, conf.OutCount)
-
-	out := potentialsResult{
-		Updated:  time.Now().Unix(),
-		Errors:   errCount,
-		Fetched:  len(trimmed),
-		SortedBy: criteria.String(),
-		Items:    trimmed,
+	out := result{
+		Metadata: meta{
+			UpdatedUnix: time.Now().Unix(),
+			Errors:      errCount,
+			APICalls:    apiCalls,
+			ResetUnix:   reset,
+			DurationSec: int(time.Since(startTime).Seconds()),
+		},
+		ByCommits:      collected[potentials.CommitsCriteria],
+		ByStars:        collected[potentials.StarsCriteria],
+		ByContributors: collected[potentials.ContributorsCriteria],
 	}
 
-	fmt.Println("writing result to", conf.OutputPath)
 	err = writeToFile(out, conf.OutputPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
 	}
-
-	elapsed := time.Since(startTime)
-	fmt.Printf("Execution time: %s", elapsed)
 }
 
-func writeToFile(result potentialsResult, outputPath string) error {
+func writeToFile(result result, outputPath string) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
 		return err
@@ -97,13 +101,4 @@ func writeToFile(result potentialsResult, outputPath string) error {
 	}
 	err = file.Sync()
 	return err
-}
-
-func trim(repos []potentials.Repository, count int) []potentials.Repository {
-	bound := count
-	if len(repos) < count {
-		bound = len(repos)
-	}
-
-	return repos[:bound]
 }

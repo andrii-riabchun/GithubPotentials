@@ -4,7 +4,7 @@ import (
 	s "sort"
 )
 
-// SortCriteria enum defines all available criterias of generating result.
+// SortCriteria enum defines all available criteria of generating result.
 type SortCriteria int
 
 func (sc SortCriteria) String() string {
@@ -24,7 +24,7 @@ func (sc SortCriteria) String() string {
 	}
 }
 
-// All available sort criterias.
+// All available sort criteria.
 const (
 	CommitsCriteria SortCriteria = iota
 	StarsCriteria

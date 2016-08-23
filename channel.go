@@ -113,7 +113,7 @@ func (in RepositoryChannel) FilterZeroStats(criteria SortCriteria) RepositoryCha
 	switch criteria {
 	case CommitsCriteria:
 		isAcceptable = func(repoMsg RepositoryMessage) bool {
-			return repoMsg.repository.Commits > 0
+			return repoMsg.repository.Commits > 1
 		}
 		break
 	case StarsCriteria:
@@ -123,7 +123,7 @@ func (in RepositoryChannel) FilterZeroStats(criteria SortCriteria) RepositoryCha
 		break
 	case ContributorsCriteria:
 		isAcceptable = func(repoMsg RepositoryMessage) bool {
-			return repoMsg.repository.Contribs > 0
+			return repoMsg.repository.Contribs > 1
 		}
 		break
 	case CombinedCriteria:

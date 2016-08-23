@@ -9,7 +9,7 @@ import (
 )
 
 const formatableQuery = "stars:>10 size:>1 pushed:>%04d-%02d-%02d"
-const resultsPerPage = 10
+const resultsPerPage = 100
 
 var errAPIRateExceded = errors.New("api rate exceeded")
 

@@ -6,9 +6,9 @@ Github Potentials command line tool is package that allows you to find rising Gi
   - Sort by selected criteria and take the best.
 
 ### Command line tool
-Under [ghp](https://github.com/ArtIsResistance/GithubPotentials/tree/master/ghp/main.go) directory you can see an example of using this package.
+Under [cmd/ghp](https://github.com/ArtIsResistance/GithubPotentials/tree/master/cmd/ghp) directory you can see an example of using this package.
 
-`go get github.com/artisresistance/githubpotentials/ghp`
+`go get github.com/artisresistance/githubpotentials/cmd/ghp`
 
 You must provide config file that contains your Github API secret token.
 Example output you can find [here](https://githubpotentials.azurewebsites.net/data.json).

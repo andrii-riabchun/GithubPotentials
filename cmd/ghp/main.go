@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	potentials "github.com/artisresistance/githubpotentials"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -47,8 +47,7 @@ func main() {
 		CountStats(it, onError).
 		Split(3)
 
-
-	joiner := new(sync.WaitGroup)	
+	joiner := new(sync.WaitGroup)
 	collected := make([]potentials.RepositoryCollection, 3)
 	for i, in := range demuxed {
 		joiner.Add(1)

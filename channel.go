@@ -1,9 +1,9 @@
 package githubpotentials
 
 import (
-    "sync"
-    "fmt"
-    "github.com/google/go-github/github"
+	"fmt"
+	"github.com/google/go-github/github"
+	"sync"
 )
 
 type RepositoryMessage struct {
@@ -146,7 +146,7 @@ func (in RepositoryChannel) FilterZeroStats(criteria SortCriteria) RepositoryCha
 	return out
 }
 
-func (in RepositoryChannel) Split(count int) []RepositoryChannel{
+func (in RepositoryChannel) Split(count int) []RepositoryChannel {
 	out := make([]RepositoryChannel, count)
 	for i := range out {
 		out[i] = make(RepositoryChannel)

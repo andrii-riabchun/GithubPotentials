@@ -61,7 +61,6 @@ func main() {
 			collected[criteria] = repositories
 		}(i, in)
 	}
-
 	joiner.Wait()
 
 	apiCalls, reset, err := client.GetAPIRates()

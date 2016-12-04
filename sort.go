@@ -1,6 +1,7 @@
 package githubpotentials
 
 import (
+	"github.com/artisresistance/githubpotentials/github"
 	s "sort"
 )
 
@@ -34,7 +35,7 @@ const (
 )
 
 // descending sort
-func sort(values []Repository, criteria SortCriteria) {
+func sort(values []github.Repository, criteria SortCriteria) {
 	switch criteria {
 	case CommitsCriteria:
 		s.Sort(commitsSort(values))
@@ -51,25 +52,25 @@ func sort(values []Repository, criteria SortCriteria) {
 	}
 }
 
-type commitsSort []Repository
+type commitsSort []github.Repository
 
 func (s commitsSort) Len() int           { return len(s) }
 func (s commitsSort) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s commitsSort) Less(i, j int) bool { return s[i].Commits > s[j].Commits }
 
-type starsSort []Repository
+type starsSort []github.Repository
 
 func (s starsSort) Len() int           { return len(s) }
 func (s starsSort) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s starsSort) Less(i, j int) bool { return s[i].Stars > s[j].Stars }
 
-type contribsSort []Repository
+type contribsSort []github.Repository
 
 func (s contribsSort) Len() int           { return len(s) }
 func (s contribsSort) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s contribsSort) Less(i, j int) bool { return s[i].Contribs > s[j].Contribs }
 
-type combinedSort []Repository
+type combinedSort []github.Repository
 
 func (s combinedSort) Len() int      { return len(s) }
 func (s combinedSort) Swap(i, j int) { s[i], s[j] = s[j], s[i] }

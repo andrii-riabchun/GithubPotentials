@@ -1,6 +1,10 @@
 package githubpotentials
 
-type RepositoryCollection []Repository
+import (
+	"github.com/artisresistance/githubpotentials/github"
+)
+
+type RepositoryCollection []github.Repository
 
 func (c RepositoryCollection) Trim(count int) RepositoryCollection {
 	bound := count

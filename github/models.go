@@ -1,6 +1,7 @@
-package githubpotentials
+package github
 
 import "github.com/google/go-github/github"
+import "time"
 
 type Repository struct {
 	Owner       string
@@ -12,6 +13,14 @@ type Repository struct {
 	Commits     int
 	Stars       int
 	Contribs    int
+}
+
+type Commit struct {
+	CommitterID int
+}
+
+type Stargazer struct {
+	StarredAt time.Time
 }
 
 func castRepository(src github.Repository) Repository {

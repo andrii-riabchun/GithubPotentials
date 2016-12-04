@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	potentials "github.com/artisresistance/githubpotentials"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -32,9 +33,10 @@ func init() {
 }
 
 func main() {
-	updatedFrom := time.Now().AddDate(0, 0, -1)
+	updatedFrom := time.Now().AddDate(0, 0, -2)
 
-	client := potentials.New(conf.Token, updatedFrom)
+	logger := log.New(os.Stdout, "ghp: ", log.Ltime|log.Lshortfile)
+	client := potentials.New(conf.Token, updatedFrom, logger)
 
 	errCount := 0
 	onError := func(err error) {
@@ -63,17 +65,17 @@ func main() {
 	}
 	joiner.Wait()
 
-	apiCalls, reset, err := client.GetAPIRates()
+	remained, reset, err := client.APIRates()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 	out := result{
 		Metadata: meta{
-			Updated:     time.Now(),
-			Errors:      errCount,
-			APICalls:    apiCalls,
-			Reset:       reset,
-			DurationSec: int(time.Since(startTime).Seconds()),
+			Updated:          time.Now(),
+			Errors:           errCount,
+			APICallsRemained: remained,
+			Reset:            reset,
+			DurationSec:      int(time.Since(startTime).Seconds()),
 		},
 		ByCommits:      collected[potentials.CommitsCriteria],
 		ByStars:        collected[potentials.StarsCriteria],

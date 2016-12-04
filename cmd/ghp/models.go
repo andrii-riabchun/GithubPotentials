@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	potentials "github.com/artisresistance/githubpotentials"
+	"github.com/artisresistance/githubpotentials/github"
 	"time"
 )
 
@@ -26,17 +26,17 @@ func loadConfig(r io.ReadCloser) (config, error) {
 
 type result struct {
 	Metadata       meta
-	ByCommits      []potentials.Repository
-	ByStars        []potentials.Repository
-	ByContributors []potentials.Repository
+	ByCommits      []github.Repository
+	ByStars        []github.Repository
+	ByContributors []github.Repository
 }
 
 type meta struct {
-	Updated     time.Time
-	APICalls    int
-	Errors      int
-	DurationSec int
-	Reset       time.Time
+	Updated          time.Time
+	APICallsRemained int
+	Errors           int
+	DurationSec      int
+	Reset            time.Time
 }
 
 func (r result) Write(wc io.WriteCloser) error {

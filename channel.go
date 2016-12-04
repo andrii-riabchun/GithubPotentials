@@ -2,12 +2,12 @@ package githubpotentials
 
 import (
 	"fmt"
-	"github.com/google/go-github/github"
+	"github.com/artisresistance/githubpotentials/github"
 	"sync"
 )
 
 type RepositoryMessage struct {
-	repository       *Repository
+	repository       *github.Repository
 	apiCallsRemained int
 	err              error
 }
@@ -20,35 +20,18 @@ func (i instance) Search(pagesCount int, onError ErrorHandler) RepositoryChannel
 	out := make(chan RepositoryMessage)
 
 	go func() {
-		opt := &github.SearchOptions{
-			Sort:        "stars",
-			Order:       "asc",
-			ListOptions: github.ListOptions{PerPage: resultsPerPage},
-		}
-
 		query := fmt.Sprintf(formatableQuery,
 			i.lastUpdated.Year(),
 			i.lastUpdated.Month(),
 			i.lastUpdated.Day())
-		for {
-			result, resp, err := i.client.Search.Repositories(query, opt)
-			if err != nil {
-				go onError(err)
-			}
-			if i.getCoreRemainingRate() < resultsPerPage {
-				break
-			}
 
-			for _, repo := range result.Repositories {
-				casted := castRepository(repo)
-				out <- RepositoryMessage{&casted, resp.Remaining, nil}
+		i.client.SearchRepositories(query, pagesCount, func(repos []github.Repository) {
+			for _, repo := range repos {
+				//TODO remove RepositoryMessage as type
+				out <- RepositoryMessage{&repo, 1000, nil}
 			}
+		})
 
-			if resp.NextPage == 0 || opt.Page == pagesCount-1 {
-				break
-			}
-			opt.Page = resp.NextPage
-		}
 		close(out)
 	}()
 
@@ -165,7 +148,7 @@ func (in RepositoryChannel) Split(count int) []RepositoryChannel {
 }
 
 func (in RepositoryChannel) Dump(onError ErrorHandler) RepositoryCollection {
-	var result []Repository
+	var result []github.Repository
 	for repoMsg := range in {
 		if repoMsg.err != nil {
 			onError(repoMsg.err)
@@ -175,7 +158,7 @@ func (in RepositoryChannel) Dump(onError ErrorHandler) RepositoryCollection {
 		result = append(result, *repoMsg.repository)
 
 		if repoMsg.apiCallsRemained == 0 {
-			onError(errAPIRateExceded)
+			//onError(errAPIRateExceded)
 			break
 		}
 	}

@@ -32,11 +32,11 @@ type result struct {
 }
 
 type meta struct {
-	UpdatedUnix time.Time
+	Updated     time.Time
 	APICalls    int
 	Errors      int
 	DurationSec int
-	ResetUnix   time.Time
+	Reset       time.Time
 }
 
 func (r result) Write(wc io.WriteCloser) error {

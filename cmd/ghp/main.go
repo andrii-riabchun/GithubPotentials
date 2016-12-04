@@ -69,10 +69,10 @@ func main() {
 	}
 	out := result{
 		Metadata: meta{
-			UpdatedUnix: time.Now(),
+			Updated:     time.Now(),
 			Errors:      errCount,
 			APICalls:    apiCalls,
-			ResetUnix:   reset,
+			Reset:       reset,
 			DurationSec: int(time.Since(startTime).Seconds()),
 		},
 		ByCommits:      collected[potentials.CommitsCriteria],

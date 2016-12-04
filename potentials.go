@@ -1,6 +1,7 @@
 package githubpotentials
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -34,7 +35,7 @@ func New(token string, lastUpdate time.Time) Potentials {
 	tokenSource := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
-	tokenClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
+	tokenClient := oauth2.NewClient(context.Background(), tokenSource)
 
 	return instance{
 		client:      github.NewClient(tokenClient),

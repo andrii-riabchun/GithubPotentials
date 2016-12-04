@@ -5,6 +5,7 @@ import (
 	"io"
 
 	potentials "github.com/artisresistance/githubpotentials"
+	"time"
 )
 
 type config struct {
@@ -31,11 +32,11 @@ type result struct {
 }
 
 type meta struct {
-	UpdatedUnix int64
+	UpdatedUnix time.Time
 	APICalls    int
 	Errors      int
 	DurationSec int
-	ResetUnix   int64
+	ResetUnix   time.Time
 }
 
 func (r result) Write(wc io.WriteCloser) error {

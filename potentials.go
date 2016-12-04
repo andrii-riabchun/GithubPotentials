@@ -21,7 +21,7 @@ type ErrorHandler func(error)
 type Potentials interface {
 	Search(int, ErrorHandler) RepositoryChannel
 	CountStats(RepositoryChannel, ErrorHandler) RepositoryChannel
-	GetAPIRates() (int, int64, error)
+	GetAPIRates() (int, time.Time, error)
 }
 
 type instance struct {
@@ -43,12 +43,12 @@ func New(token string, lastUpdate time.Time) Potentials {
 	}
 }
 
-func (i instance) GetAPIRates() (int, int64, error) {
+func (i instance) GetAPIRates() (int, time.Time, error) {
 	r, _, err := i.client.RateLimits()
 	if err != nil {
-		return -1, -1, err
+		return -1, time.Time{}, err
 	}
-	return r.Core.Limit - r.Core.Remaining, r.Core.Reset.Time.Unix(), nil
+	return r.Core.Limit - r.Core.Remaining, r.Core.Reset.Time, nil
 }
 
 func (i instance) getCoreRemainingRate() int {

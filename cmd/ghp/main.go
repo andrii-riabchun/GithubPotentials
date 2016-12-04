@@ -69,7 +69,7 @@ func main() {
 	}
 	out := result{
 		Metadata: meta{
-			UpdatedUnix: time.Now().Unix(),
+			UpdatedUnix: time.Now(),
 			Errors:      errCount,
 			APICalls:    apiCalls,
 			ResetUnix:   reset,

@@ -4,22 +4,16 @@ import (
 	"github.com/artisresistance/githubpotentials/github"
 )
 
-func (i instance) countContributors(owner, repo string) (int, error) {
-	uc := newUniqueCounter()
-	i.client.ListCommits(owner, repo, i.lastUpdated, func(commits []github.Commit) {
-		for _, commit := range commits {
-			uc.Add(commit.CommitterID)
-		}
-	})
-	return uc.Count(), nil
-}
-
-func (i instance) countCommits(owner, repo string) (int, error) {
+func (i instance) countCommitsAndContributors(owner, repo string) (int, int, error) {
 	totalCommits := 0
+	contributorsUC := newUniqueCounter()
 	i.client.ListCommits(owner, repo, i.lastUpdated, func(commits []github.Commit) {
 		totalCommits += len(commits)
+		for _, commit := range commits {
+			contributorsUC.Add(commit.CommitterID)
+		}
 	})
-	return totalCommits, nil
+	return totalCommits, contributorsUC.Count(), nil
 }
 
 func (i instance) countStars(owner, repo string) (int, error) {

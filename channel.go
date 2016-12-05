@@ -47,16 +47,17 @@ func (i instance) CountStats(in RepositoryChannel) RepositoryChannel {
 			}
 
 			joiner := new(sync.WaitGroup)
-			joiner.Add(3)
+			joiner.Add(2)
 
 			go func() {
 				defer joiner.Done()
-				commitsCount, err := i.countCommits(repo.repository.Owner, repo.repository.Name)
+				commitsCount, contribsCount, err := i.countCommitsAndContributors(repo.repository.Owner, repo.repository.Name)
 				if err != nil {
 					i.log.Println(err)
 					repo.err = err
 				} else {
 					repo.repository.Commits = commitsCount
+					repo.repository.Contribs = contribsCount
 				}
 			}()
 
@@ -68,17 +69,6 @@ func (i instance) CountStats(in RepositoryChannel) RepositoryChannel {
 					repo.err = err
 				} else {
 					repo.repository.Stars = starsCount
-				}
-			}()
-
-			go func() {
-				defer joiner.Done()
-				contribsCount, err := i.countContributors(repo.repository.Owner, repo.repository.Name)
-				if err != nil {
-					i.log.Println(err)
-					repo.err = err
-				} else {
-					repo.repository.Contribs = contribsCount
 				}
 			}()
 

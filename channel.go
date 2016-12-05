@@ -6,18 +6,12 @@ import (
 	"sync"
 )
 
-type RepositoryMessage struct {
-	repository       *github.Repository
-	apiCallsRemained int
-	err              error
-}
-
-type RepositoryChannel chan RepositoryMessage
+type RepositoryChannel chan *github.Repository
 
 // Search returns iterable channel of all search results.
 // Return all repositories that were updated after specified date.
 func (i instance) Search(pagesCount int) RepositoryChannel {
-	out := make(chan RepositoryMessage)
+	out := make(RepositoryChannel)
 
 	go func() {
 		query := fmt.Sprintf(formatableQuery,
@@ -27,8 +21,7 @@ func (i instance) Search(pagesCount int) RepositoryChannel {
 
 		i.client.SearchRepositories(query, pagesCount, func(repos []github.Repository) {
 			for _, repo := range repos {
-				//TODO remove RepositoryMessage as type
-				out <- RepositoryMessage{&repo, 1000, nil}
+				out <- &repo
 			}
 		})
 
@@ -39,37 +32,31 @@ func (i instance) Search(pagesCount int) RepositoryChannel {
 }
 
 func (i instance) CountStats(in RepositoryChannel) RepositoryChannel {
-	out := make(chan RepositoryMessage)
+	out := make(RepositoryChannel)
 	go func() {
 		for repo := range in {
-			if repo.apiCallsRemained == 0 {
-				break
-			}
-
 			joiner := new(sync.WaitGroup)
 			joiner.Add(2)
 
 			go func() {
 				defer joiner.Done()
-				commitsCount, contribsCount, err := i.countCommitsAndContributors(repo.repository.Owner, repo.repository.Name)
+				commitsCount, contribsCount, err := i.countCommitsAndContributors(repo.Owner, repo.Name)
 				if err != nil {
 					i.log.Println(err)
-					repo.err = err
-				} else {
-					repo.repository.Commits = commitsCount
-					repo.repository.Contribs = contribsCount
+					return
 				}
+				repo.Commits = commitsCount
+				repo.Contribs = contribsCount
 			}()
 
 			go func() {
 				defer joiner.Done()
-				starsCount, err := i.countStars(repo.repository.Owner, repo.repository.Name)
+				starsCount, err := i.countStars(repo.Owner, repo.Name)
 				if err != nil {
 					i.log.Println(err)
-					repo.err = err
-				} else {
-					repo.repository.Stars = starsCount
+					return
 				}
+				repo.Stars = starsCount
 			}()
 
 			joiner.Wait()
@@ -81,29 +68,27 @@ func (i instance) CountStats(in RepositoryChannel) RepositoryChannel {
 }
 
 func (in RepositoryChannel) FilterZeroStats(criteria SortCriteria) RepositoryChannel {
-	out := make(chan RepositoryMessage)
-	var isAcceptable func(repoMsg RepositoryMessage) bool
+	out := make(RepositoryChannel)
+	var isAcceptable func(repo *github.Repository) bool
 	switch criteria {
 	case CommitsCriteria:
-		isAcceptable = func(repoMsg RepositoryMessage) bool {
-			return repoMsg.repository.Commits > 1
+		isAcceptable = func(repo *github.Repository) bool {
+			return repo.Commits > 1
 		}
 		break
 	case StarsCriteria:
-		isAcceptable = func(repoMsg RepositoryMessage) bool {
-			return repoMsg.repository.Stars > 0
+		isAcceptable = func(repo *github.Repository) bool {
+			return repo.Stars > 0
 		}
 		break
 	case ContributorsCriteria:
-		isAcceptable = func(repoMsg RepositoryMessage) bool {
-			return repoMsg.repository.Contribs > 0
+		isAcceptable = func(repo *github.Repository) bool {
+			return repo.Contribs > 0
 		}
 		break
 	case CombinedCriteria:
-		isAcceptable = func(repoMsg RepositoryMessage) bool {
-			return repoMsg.repository.Contribs+
-				repoMsg.repository.Commits+
-				repoMsg.repository.Stars > 0
+		isAcceptable = func(repo *github.Repository) bool {
+			return repo.Contribs+repo.Commits+repo.Stars > 1
 		}
 		break
 	}
@@ -125,9 +110,9 @@ func (in RepositoryChannel) Split(count int) []RepositoryChannel {
 		out[i] = make(RepositoryChannel)
 	}
 	go func() {
-		for msg := range in {
+		for repo := range in {
 			for i := range out {
-				out[i] <- msg
+				out[i] <- repo
 			}
 		}
 		for i := range out {
@@ -139,17 +124,8 @@ func (in RepositoryChannel) Split(count int) []RepositoryChannel {
 
 func (in RepositoryChannel) Dump() RepositoryCollection {
 	var result []github.Repository
-	for repoMsg := range in {
-		if repoMsg.err != nil {
-			continue
-		}
-
-		result = append(result, *repoMsg.repository)
-
-		if repoMsg.apiCallsRemained == 0 {
-			break
-		}
+	for repo := range in {
+		result = append(result, *repo)
 	}
-
 	return result
 }

@@ -33,7 +33,7 @@ type result struct {
 
 type meta struct {
 	Updated           time.Time
-	ExecutionDuration time.Duration
+	ExecutionDuration string
 	APICallsRemained  int
 	APIReset          time.Time
 }

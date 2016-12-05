@@ -66,7 +66,7 @@ func main() {
 	out := result{
 		Metadata: meta{
 			Updated:           time.Now(),
-			ExecutionDuration: time.Since(startTime),
+			ExecutionDuration: time.Since(startTime).String(),
 			APICallsRemained:  remained,
 			APIReset:          reset,
 		},

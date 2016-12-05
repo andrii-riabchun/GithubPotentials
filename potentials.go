@@ -14,12 +14,13 @@ type ErrorHandler func(error)
 
 // Potentials is main worker of package.
 type Potentials interface {
-	Search(int, ErrorHandler) RepositoryChannel
-	CountStats(RepositoryChannel, ErrorHandler) RepositoryChannel
+	Search(int) RepositoryChannel
+	CountStats(RepositoryChannel) RepositoryChannel
 	APIRates() (remaining int, reset time.Time, err error)
 }
 
 type instance struct {
+	log         *log.Logger
 	client      github.Client
 	lastUpdated time.Time
 }
@@ -28,6 +29,7 @@ type instance struct {
 // token - github api token.
 func New(token string, since time.Time, log *log.Logger) Potentials {
 	return instance{
+		log:         log,
 		client:      github.NewClient(token, log),
 		lastUpdated: since,
 	}

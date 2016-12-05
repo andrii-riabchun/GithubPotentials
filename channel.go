@@ -16,7 +16,7 @@ type RepositoryChannel chan RepositoryMessage
 
 // Search returns iterable channel of all search results.
 // Return all repositories that were updated after specified date.
-func (i instance) Search(pagesCount int, onError ErrorHandler) RepositoryChannel {
+func (i instance) Search(pagesCount int) RepositoryChannel {
 	out := make(chan RepositoryMessage)
 
 	go func() {
@@ -38,7 +38,7 @@ func (i instance) Search(pagesCount int, onError ErrorHandler) RepositoryChannel
 	return out
 }
 
-func (i instance) CountStats(in RepositoryChannel, onError ErrorHandler) RepositoryChannel {
+func (i instance) CountStats(in RepositoryChannel) RepositoryChannel {
 	out := make(chan RepositoryMessage)
 	go func() {
 		for repo := range in {
@@ -53,7 +53,7 @@ func (i instance) CountStats(in RepositoryChannel, onError ErrorHandler) Reposit
 				defer joiner.Done()
 				commitsCount, err := i.countCommits(repo.repository.Owner, repo.repository.Name)
 				if err != nil {
-					go onError(err)
+					i.log.Println(err)
 					repo.err = err
 				} else {
 					repo.repository.Commits = commitsCount
@@ -64,7 +64,7 @@ func (i instance) CountStats(in RepositoryChannel, onError ErrorHandler) Reposit
 				defer joiner.Done()
 				starsCount, err := i.countStars(repo.repository.Owner, repo.repository.Name)
 				if err != nil {
-					go onError(err)
+					i.log.Println(err)
 					repo.err = err
 				} else {
 					repo.repository.Stars = starsCount
@@ -75,7 +75,7 @@ func (i instance) CountStats(in RepositoryChannel, onError ErrorHandler) Reposit
 				defer joiner.Done()
 				contribsCount, err := i.countContributors(repo.repository.Owner, repo.repository.Name)
 				if err != nil {
-					go onError(err)
+					i.log.Println(err)
 					repo.err = err
 				} else {
 					repo.repository.Contribs = contribsCount
@@ -147,18 +147,16 @@ func (in RepositoryChannel) Split(count int) []RepositoryChannel {
 	return out
 }
 
-func (in RepositoryChannel) Dump(onError ErrorHandler) RepositoryCollection {
+func (in RepositoryChannel) Dump() RepositoryCollection {
 	var result []github.Repository
 	for repoMsg := range in {
 		if repoMsg.err != nil {
-			onError(repoMsg.err)
 			continue
 		}
 
 		result = append(result, *repoMsg.repository)
 
 		if repoMsg.apiCallsRemained == 0 {
-			//onError(errAPIRateExceded)
 			break
 		}
 	}

@@ -34,7 +34,6 @@ type result struct {
 type meta struct {
 	Updated          time.Time
 	APICallsRemained int
-	Errors           int
 	DurationSec      int
 	Reset            time.Time
 }

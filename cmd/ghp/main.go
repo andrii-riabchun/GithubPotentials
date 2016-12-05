@@ -38,15 +38,9 @@ func main() {
 	logger := log.New(os.Stdout, "ghp: ", log.Ltime|log.Lshortfile)
 	client := potentials.New(conf.Token, updatedFrom, logger)
 
-	errCount := 0
-	onError := func(err error) {
-		errCount++
-		fmt.Fprintln(os.Stderr, err.Error())
-	}
-
-	it := client.Search(conf.FetchPagesCount, onError)
+	it := client.Search(conf.FetchPagesCount)
 	demuxed := client.
-		CountStats(it, onError).
+		CountStats(it).
 		Split(3)
 
 	joiner := new(sync.WaitGroup)
@@ -57,7 +51,7 @@ func main() {
 			defer joiner.Done()
 			criteria := potentials.SortCriteria(i)
 			repositories := in.FilterZeroStats(criteria).
-				Dump(onError).
+				Dump().
 				Sort(criteria).
 				Trim(conf.OutCount)
 			collected[criteria] = repositories
@@ -72,7 +66,6 @@ func main() {
 	out := result{
 		Metadata: meta{
 			Updated:          time.Now(),
-			Errors:           errCount,
 			APICallsRemained: remained,
 			Reset:            reset,
 			DurationSec:      int(time.Since(startTime).Seconds()),

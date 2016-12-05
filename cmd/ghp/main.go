@@ -65,10 +65,10 @@ func main() {
 	}
 	out := result{
 		Metadata: meta{
-			Updated:          time.Now(),
-			APICallsRemained: remained,
-			Reset:            reset,
-			DurationSec:      int(time.Since(startTime).Seconds()),
+			Updated:           time.Now(),
+			ExecutionDuration: time.Since(startTime),
+			APICallsRemained:  remained,
+			APIReset:          reset,
 		},
 		ByCommits:      collected[potentials.CommitsCriteria],
 		ByStars:        collected[potentials.StarsCriteria],

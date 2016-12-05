@@ -32,10 +32,10 @@ type result struct {
 }
 
 type meta struct {
-	Updated          time.Time
-	APICallsRemained int
-	DurationSec      int
-	Reset            time.Time
+	Updated           time.Time
+	ExecutionDuration time.Duration
+	APICallsRemained  int
+	APIReset          time.Time
 }
 
 func (r result) Write(wc io.WriteCloser) error {

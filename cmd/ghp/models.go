@@ -25,17 +25,10 @@ func loadConfig(r io.ReadCloser) (config, error) {
 }
 
 type result struct {
-	Metadata       meta
+	Updated        time.Time
 	ByCommits      []github.Repository
 	ByStars        []github.Repository
 	ByContributors []github.Repository
-}
-
-type meta struct {
-	Updated           time.Time
-	ExecutionDuration string
-	APICallsRemained  int
-	APIReset          time.Time
 }
 
 func (r result) Write(wc io.WriteCloser) error {

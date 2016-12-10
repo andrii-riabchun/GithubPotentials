@@ -63,13 +63,13 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
+
+	logger.Printf("Duration:%s\n", time.Since(startTime).String())
+	logger.Printf("API Calls Remained:%d\n", remained)
+	logger.Printf("API Reset:%s\n", reset.String())
+
 	out := result{
-		Metadata: meta{
-			Updated:           time.Now(),
-			ExecutionDuration: time.Since(startTime).String(),
-			APICallsRemained:  remained,
-			APIReset:          reset,
-		},
+		Updated:        time.Now(),
 		ByCommits:      collected[potentials.CommitsCriteria],
 		ByStars:        collected[potentials.StarsCriteria],
 		ByContributors: collected[potentials.ContributorsCriteria],

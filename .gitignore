@@ -1,4 +1,6 @@
 cmd/ghp/config.json
 cmd/ghp/data.json
+cmd/ghp/debug
+.vscode
 *.exe
 vendor/*/

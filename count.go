@@ -10,8 +10,9 @@ func (i instance) countCommitsAndContributors(owner, repo string) (int, int, err
 	i.client.ListCommits(owner, repo, i.lastUpdated, func(commits []github.Commit) {
 		totalCommits += len(commits)
 		for _, commit := range commits {
-			contributorsUC.Add(commit.CommitterID)
+			contributorsUC.Add(commit)
 		}
+
 	})
 	return totalCommits, contributorsUC.Count(), nil
 }

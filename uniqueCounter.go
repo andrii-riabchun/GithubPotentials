@@ -1,15 +1,17 @@
 package githubpotentials
 
 type uniqueCounter struct {
-	items map[int]struct{}
+	items map[interface{}]struct{}
 }
 
 func newUniqueCounter() uniqueCounter {
-	return uniqueCounter{items: make(map[int]struct{})}
+	return uniqueCounter{
+		items: make(map[interface{}]struct{}),
+	}
 }
 
-func (uc uniqueCounter) Add(i int) {
-	uc.items[i] = struct{}{}
+func (uc uniqueCounter) Add(item interface{}) {
+	uc.items[item] = struct{}{}
 }
 
 func (uc uniqueCounter) Count() int {
